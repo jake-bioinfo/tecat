@@ -8,7 +8,7 @@
 #' @param motifs A character vector of telomere motifs to search for.
 #' @return A data frame containing the start, end, window length, telomere
 #' count, motif frequency, and hit motif.
-#' @importFrom Biostrings DNAStringSetList DNAStringSet countPattern
+#' @import Biostrings
 #' @export
 generate_telomere_frequencies <- function(telomere_windows, 
                                           motifs) {
@@ -90,7 +90,7 @@ generate_telomere_frequencies <- function(telomere_windows,
 #' @param motifs A character vector of telomere motifs to search for.
 #' @return A data frame containing the start, end, window length, telomere
 #' count, motif frequency, and hit motif.
-#' @importFrom Biostrings DNAStringSetList DNAStringSet countPattern
+#' @importFrom Biostrings DNAStringSetList DNAStringSet countPattern start nchar
 #' @export
 frequencies <- function(windows,
                         motifs,

@@ -5,8 +5,8 @@
 #' @param result_df A data frame containing the telomere length and hit motif
 #' information.
 #' @return A DNAStringSet object containing truncated reads.
-#' @importFrom subseq Biostrings DNAStringSet
 #' @param reads A DNAStringSet object containing reads to be truncated
+#' @importFrom Biostrings subseq 
 #' @export
 truncation <- function(reads, result_df) {
 
@@ -134,8 +134,9 @@ truncate_files <- function(combined_telomere_file = NULL,
 #' @param verbose A logical value specifying whether to display verbose messages.
 #' Default is TRUE.
 #' @return A list containing the mapped reads and the results data frame.
-#' @importFrom dplyr distinct left_join Biostrings readDNAStringSet width
-#' @importFrom minimapR minimap2
+#' @importFrom dplyr distinct left_join
+#' @importFrom Biostrings readDNAStringSet width
+#' @import stringr
 #' @export
 map <- function(fasta = NULL, 
                 results_data_frame = NULL, 

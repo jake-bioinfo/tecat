@@ -40,6 +40,9 @@ split_fastq <- function(in_fastq, size = 284289, prefix = "split_",
                         compression_level = -1, threads = 1,
                         out_dir = paste0(dirname(in_fastq), "/split"),
                         extension = NULL) {
+  # Create output directory if it doesn't exist
+  dir.create(out_dir, showWarnings = FALSE)
+
   # Create command
   cmd <- paste0("seqkit")
   args <- c("split2", in_fastq, "-s", size, 
@@ -165,5 +168,5 @@ auto_split <- function(in_fastq, size = 284289, prefix = "split_",
   # Return list of files
   file_list <- list.files(path = out_dir, full.names = TRUE,
                           pattern = "split_")
-  return(append(stats, file_list))
+  return(list(stats = stats, file_list = file_list))
 }

@@ -25,6 +25,7 @@
 #' Default is 100.
 #' @returns A list of IRanges::Views objects, each containing overlapping
 #' windows of the original telomere sequences.
+#' @importFrom IRanges Views
 #' @export
 sliding_window <- function(telomere_sequence,
                            window_length = 200,
@@ -39,7 +40,6 @@ sliding_window <- function(telomere_sequence,
       start = seq(
         from = 1,
         to = length(telomere_sequence),
-        # Added * 0.5 to make a rolling window instead of sliding? does this work? who knows?
         by = step
       ),
       width = window_length,
@@ -82,12 +82,8 @@ sliding_window <- function(telomere_sequence,
 #' @param verbose A logical specifying whether to print messages. Default is FALSE.
 #' @returns A list of IRanges::Views objects, each containing overlapping windows
 #' of the original telomere sequences.
-#' @import Biostrings
-#' @import IRanges
-#' @import pbmcapply
-#' @import doSNOW
-#' @import foreach
-#' @import parallel
+#' @importFrom Biostrings readDNAStringSet
+#' @import parallel pbmcapply doSNOW foreach
 #' @export
 sliding_window_parallel <- function(telomere_file,
                                     window_length = 200,
@@ -95,14 +91,6 @@ sliding_window_parallel <- function(telomere_file,
                                     environment = "linux",
                                     threads = 1,
                                     verbose = FALSE) {
-
-            #  telomere_file <- telo_file
-            #                         window_length = 200
-            #                         step = 100
-            #                         environment = "linux"
-            #                         threads = 18
-            #                         verbose = TRUE                         
-
   # Status message
   if (verbose) {
     cat(
@@ -113,7 +101,6 @@ sliding_window_parallel <- function(telomere_file,
   }
 
   # Read in files
-  # X <- lapply(telomere_file_list, readRDS)
   X <- Biostrings::readDNAStringSet(telomere_file)
 
   # Run in parallel

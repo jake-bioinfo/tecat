@@ -282,3 +282,88 @@ optimal_thresholds <- function(threshold_dataframe) {
         telomere_length = tel_thresh
     ))
 }
+
+# Plot thresholds data with thresholds
+#' @title plot_thresholds
+#' @description Plot the thresholds data with the thresholds.
+#' @param threshold_dataframe A data frame containing the start and end
+#' thresholds for the telomere length calculation.
+#' @param optimal_thresholds A list containing the optimal thresholds for
+#' the telomere length calculation.
+#' @return A ggplot object containing the plot of the thresholds data.
+#' @export
+#' @import ggplot2 cowplot
+plot_thresholds <- function(threshold_dataframe = NULL,
+                            optimal_thresholds = NULL) {
+    # Check that threshold_dataframe is not NULL
+    if (is.null(threshold_dataframe)) {
+        stop("threshold_dataframe is NULL")
+    }
+    # Check that optimal_thresholds is not NULL
+    if (is.null(optimal_thresholds)) {
+        stop("optimal_thresholds is NULL")
+    }
+
+    # Reformat data
+    thresh_df <- threshold_dataframe
+    # Start sensitivity
+    start_number_of_telos <- unlist(lapply(thresh_df$start, function(x) {
+        length(which(!is.na(x$telomere_end)))
+    }))
+    sensitivity_df <- data.frame(
+        start = seq(1, 100, 1),
+        end = rep(5, 100),
+        number_of_telos = start_number_of_telos
+    )
+
+    # Telomere length
+    # End telomere length
+    telomere_lengths_end <- lapply(thresh_df$end, function(x) {
+        vals <- x$telomere_length[!is.na(x$telomere_end)]
+        x <- mean(vals)
+        if (x != 0 & length(vals) > 1) {
+            std_dev <- sd(vals)
+        } else {
+            std_dev <- 0
+        }
+        ret_frame <- data.frame(
+            mean = x,
+            std_dev = std_dev
+        )
+        return(ret_frame)
+    })
+    end_df <- do.call(rbind, telomere_lengths_end)
+    telomere_length_df <- cbind(
+        start = rep(20, 100),
+        end = seq(1, 100, 1),
+        end_df
+    )
+
+    # Plot the thresholds data
+    library(cowplot)
+
+    # Plot sensitivity and telomere line graphs next to each other
+    sens_plot <- ggplot(sensitivity_df, aes(x = start, y = number_of_telos)) +
+        geom_line() +
+        geom_point() +
+        geom_vline(xintercept = optimal_thresholds$sensitivity, color = "red") +
+        labs(
+            x = "Start Threshold",
+            y = "Number of Telomeres",
+            title = "Telomere Sensitivity"
+        ) +
+        theme_bw()
+
+    telomere_plot <- ggplot(telomere_length_df, aes(x = end, y = mean)) +
+        geom_line() +
+        geom_point() +
+        geom_vline(xintercept = optimal_thresholds$telomere_length, color = "red") +
+        labs(
+            x = "End Threshold",
+            y = "Telomere Length",
+            title = "Telomere Length"
+        ) +
+        theme_bw()
+
+    return(plot_grid(sens_plot, telomere_plot, ncol = 2))
+}

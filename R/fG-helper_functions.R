@@ -135,6 +135,7 @@ estimate_ram_usage <- function(files, verbose = FALSE) {
 #' @param which A character string specifying which objects to remove. Default is "all".
 #' @param environ An environment object specifying the environment to search. Default
 #' is .GlobalEnv.
+#' importFrom Biostrings DNAStringSet nchar substring vcountPattern
 #' @export
 find_sizes <- function(clean = FALSE,
     which = "all",
@@ -276,7 +277,9 @@ combine_fasta <- function(list_of_fasta = NULL,
                                 format = "fasta", 
                                 compress = TRUE)
   }
+  fp <- file.path(out_dir, paste0(prefix, ".fa.gz"))
   
   # Return
-  if(return_reads) return(list(combined_reads = fasta))
+  return(file.path = fp)
+  if(return_reads) return(list(combined_reads = fasta), file.path = fp)
 }

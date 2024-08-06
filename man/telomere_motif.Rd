@@ -5,7 +5,7 @@
 \title{Determine telomere motifs from reference fasta file}
 \usage{
 telomere_motif(
-  data_ref,
+  reference_file = NULL,
   reference_telo_length = 2000,
   telo_motif_length = 6,
   number_of_motifs = 5,
@@ -16,8 +16,6 @@ telomere_motif(
 )
 }
 \arguments{
-\item{data_ref}{DNAStringSet reference data.}
-
 \item{reference_telo_length}{numeric predicted length of telomeres
 present in the reference file.}
 
@@ -32,6 +30,8 @@ present in the reference file.}
 \item{platform}{character sequencing platform used (PB | ONT).}
 
 \item{seed}{numeric seed for random number generation.}
+
+\item{data_ref}{DNAStringSet reference data.}
 }
 \value{
 list object which contains the list elements grep_list and

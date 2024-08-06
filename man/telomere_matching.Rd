@@ -17,6 +17,17 @@ telomere_matching(
 \item{fastq_file}{A character string of the fastq file to search.}
 
 \item{names_prefix}{A character string to prefix the names of the telomere sequences.}
+
+\item{out_dir}{A character string of the output directory.}
+
+\item{grep_list}{A character vector of telomere motifs to search for.}
+
+\item{return_telomeres}{A logical of whether to return the telomere sequences.}
+
+\item{verbose}{A logical of whether to print messages.}
+}
+\value{
+A list of telomere sequences (if return_telomere: TRUE) and a list of statistics.
 }
 \description{
 telomere_matching takes in a fastq file and searches for telomere

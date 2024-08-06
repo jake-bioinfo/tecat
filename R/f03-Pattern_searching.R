@@ -19,6 +19,8 @@
 #' @param return_telomeres A logical of whether to return the telomere sequences.
 #' @param verbose A logical of whether to print messages.
 #' @return A list of telomere sequences (if return_telomere: TRUE) and a list of statistics.
+#' @importFrom Biostrings readDNAStringSet writeXStringSet vcountPattern
+#' @importFrom IRanges width
 #' @export
 telomere_matching <- function(fastq_file,
                               names_prefix = "telomere_",

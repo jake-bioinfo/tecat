@@ -31,12 +31,12 @@
 #' @param seed numeric seed for random number generation.
 #' @return list object which contains the list elements grep_list and
 #' motifs
-#' @import Biostrings
+#' @importFrom Biostrings DNAString DNAStringSet DNAStringSetList complement reverse reverseComplement readDNAStringSet width
 #' @import stringi
 #' @import memes
 #' @import universalmotif
 #' @export
-telomere_motif <- function(data_ref,
+telomere_motif <- function(reference_file = NULL,
                            reference_telo_length = 2000,
                            telo_motif_length = 6,
                            number_of_motifs = 5,
@@ -44,15 +44,21 @@ telomere_motif <- function(data_ref,
                            threads = 1,
                            platform = "PB",
                            seed = 9273) {
+  # Check inputs
+  stopifnot(is.character(reference_file),
+            is.numeric(reference_telo_length),
+            is.numeric(telo_motif_length),
+            is.numeric(number_of_motifs),
+            is.numeric(number_of_repeats),
+            is.numeric(threads),
+            is.character(platform),
+            is.numeric(seed))
 
-  # Check data is a DNAStringSet
-  if (!is(DNAStringSet(data_ref), "DNAStringSet")) {
-    stop("data_ref is not a DNAStringSet")
-  }
   # Print data is a DNAStringSet
   message("\nSuccessfully loaded DNAStringSet reference.\n")
 
   # Assign reference sequence after check
+  data_ref <- Biostrings::readDNAStringSet(reference_file)
   ref.seq <- data_ref
 
   # Check if reference data was loaded
