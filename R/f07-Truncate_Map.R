@@ -25,7 +25,7 @@ truncation <- function(reads, result_df) {
 
 
 ## Truncate reads at the file level
-#' @title Truncate files
+#' @title Truncate file
 #' @description Truncate reads based on the telomere length and hit motif.
 #' @param combined_telomere_file A character string specifying the combined
 #' telomere file.
@@ -44,14 +44,13 @@ truncation <- function(reads, result_df) {
 #' @return A list containing the truncated reads and the truncated file list.
 #' @importFrom Biostrings readDNAStringSet writeXStringSet
 #' @export
-truncate_files <- function(combined_telomere_file = NULL,
-                           results_data_frame = NULL,
-                           out_dir = file.path(getwd(), "truncated_reads"),
-                           prefix = "truncated",
-                           write_file = TRUE,
-                           progress = TRUE,
-                           return = FALSE,
-                           verbose = TRUE) {
+truncate_file <- function(combined_telomere_file = NULL,
+                          results_data_frame = NULL,
+                          out_dir = file.path(getwd(), "truncated_reads"),
+                          prefix = "truncated",
+                          write_file = TRUE,
+                          return = FALSE,
+                          verbose = TRUE) {
 
   # Check inputs
   stopifnot(
@@ -59,14 +58,12 @@ truncate_files <- function(combined_telomere_file = NULL,
     is.data.frame(results_data_frame),
     is.character(out_dir),
     is.character(prefix),
-    is.logical(progress),
     is.logical(return),
     is.logical(verbose)
   )
 
   # Read in the combined telomere file
   telomeres <- Biostrings::readDNAStringSet(combined_telomere_file)
-  # telomeres <- bio_ul(telomeres)
 
   # Cross telos to throw out NAs
   ind <- which(!is.na(results_data_frame$telomere_end))
@@ -77,7 +74,7 @@ truncate_files <- function(combined_telomere_file = NULL,
 
   ret_ls <- list()
   for (iter in seq_along(telomeres)) {
-    ret_ls[[iter]] <- truncation(telomeres[iter], results_data_frame)
+    ret_ls[[iter]] <- truncation(telomeres[iter], rdf)
   }
 
   ret_ls <- bio_ul(ret_ls)
@@ -106,7 +103,7 @@ truncate_files <- function(combined_telomere_file = NULL,
   # Return
   if (return) {
     return(list(
-      truncated_reads = ret,
+      truncated_reads = ret_ls,
       truncated_file_list = files_list
     ))
   }
@@ -241,4 +238,99 @@ map <- function(fasta = NULL,
     return(list(results = results))
   }
 
+}
+
+## tecat map  
+#' @title Plotted mapped reads
+#' @description Plot mapped reads.
+#' @param mapped_results A list containing the mapped reads and the results data frame.
+#' @param out_dir A character string specifying the output directory.
+#' @param prefix A character string specifying the prefix for the output files.
+#' @param verbose A logical value specifying whether to display verbose messages.
+#' @param return A logical value specifying whether to return the plotted reads.
+#' Default is FALSE.
+#' @param save_plots A logical value specifying whether to save the plot to disk.
+#' @return A list containing the histogram and violin plot.
+#' @import ggplot2 cowplot extrafont
+#' @export
+tecat_plot <- function(mapped_output = NULL, 
+                       out_dir = file.path(getwd(), "mapped_reads"),
+                       prefix = "mapped",
+                       save_plots = TRUE,
+                       return = FALSE) {
+  # Check inputs
+  stopifnot(is.data.frame(mapped_output[["results"]]),
+            is.character(out_dir),
+            is.character(prefix),
+            is.logical(return))
+
+  # Create output directory if it doesn't exist
+  dir.create(out_dir, showWarnings = FALSE)
+
+  # Plot
+  extrafont::loadfonts()
+  hist <- ggplot(mapped_output[["results"]], aes(x = telomere_length)) +
+    geom_histogram(binwidth = 100, aes(fill = chromEnd, y = after_stat(density)), alpha = 0.3) +
+    geom_density(alpha = 0.6, aes(y = after_stat(density), fill = chromEnd)) +
+    geom_vline(aes(xintercept = mean(telomere_length, na.rm = TRUE)),
+      color = "#ff0051", linetype = "dashed", linewidth = 1
+    ) +
+    labs(
+      x = "Telomere Length",
+      y = "Frequency",
+      title = "Histogram of Telomere Lengths"
+    ) +
+    theme(text = element_text(size = 22, family = "Arial"))
+
+
+  left <- mapped_output[["results"]][mapped_output[["results"]]$chromEnd == "5'", ]
+  ord <- order(as.numeric(stringr::str_extract(left$ref_name, "\\d+")))
+  left <- left[ord, ]
+  left$ref_name <- factor(left$ref_name, levels = unique(left$ref_name))
+  right <- mapped_output[["results"]][mapped_output[["results"]]$chromEnd == "3'", ]
+  ord <- order(as.numeric(stringr::str_extract(right$ref_name, "\\d+")))
+  right <- right[ord, ]
+  right$ref_name <- factor(right$ref_name, levels = unique(right$ref_name))
+  
+  # Start violin plot
+  top <- ggplot(left, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
+    geom_violin(drop = FALSE) +
+    geom_boxplot(width = 0.1) +
+    scale_fill_manual(values = c("#0091ff")) +
+    labs(
+      x = "Chromosome",
+      y = "Telomere Length (kb)",
+      title = "Telomere Lengths by Chromosome End 5'"
+    ) +
+    theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
+    theme(text = element_text(size = 18, family = "Arial")) +
+    theme(legend.position = "none")
+
+  bottom <- ggplot(right, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
+    geom_violin(drop = FALSE) +
+    geom_boxplot(width = 0.1) +
+    scale_fill_manual(values = c("#ff00b7")) +
+    labs(
+      x = "Chromosome",
+      y = "Telomere Length (kb)",
+      title = "Telomere Lengths by Chromosome End 3'"
+    ) +
+    theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
+    theme(text = element_text(size = 18, family = "Arial")) +
+    theme(legend.position = "none")
+
+  grid <- plot_grid(top, bottom, ncol = 1)
+
+  if (save_plots) {
+    # Save plots
+    save_plot(file.path(out_dir, paste0(prefix, "_violin_plot.png")), grid, base_width = 12, base_height = 6)
+    save_plot(file.path(out_dir, paste0(prefix, "_histogram.png")), hist, base_width = 12, base_height = 6)
+  }
+
+  if (return) {
+    return(list(
+      histogram = hist,
+      violin_plot = grid
+    ))
+  }
 }

@@ -1,6 +1,5 @@
 ## This script is used to calculate the telomere length of each sample
 ## in a given dataset)
-# Draw to Smash Logic Puzzle
 
 # This function is used to calculate the lenght of the telomere
 # repeat in a given read.
