@@ -115,7 +115,8 @@ telomere_motif <- function(reference_file = NULL,
     norand = TRUE,
     mod = "anr",
     revcomp = TRUE,
-    p = paste(threads, "--oversubscribe")
+    p = paste(threads, "--oversubscribe"), 
+    silent = FALSE
   )
 
   # Motifs

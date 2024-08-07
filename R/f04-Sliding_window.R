@@ -114,7 +114,8 @@ sliding_window_parallel <- function(telomere_file,
     # Run in parallel in linux
   ret <- pbmcapply::pbmclapply(X, sliding_window, 
     window_length = window_length, 
-    step = step, mc.cores = threads)
+    step = step, mc.cores = threads, 
+    ignore.interactive = TRUE)
 
   } else {
     if (verbose) {

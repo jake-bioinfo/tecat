@@ -189,7 +189,8 @@ telo_search <- function(fastq_files = NULL,
         verbose = verbose,
         return_telomeres = return_telomeres,
         mc.cores = threads, 
-        mc.style = "ETA"
+        mc.style = "ETA", 
+        ignore.interactive = TRUE
     )
 
     # Add file list to output
@@ -231,23 +232,17 @@ telo_search <- function(fastq_files = NULL,
         "file_name"
     )
 
-    # Status message
-    cat(
-        "Finished searching for telomeres which resulted in ",
-        length(file_list), " files\n"
-    )
-
     # Return telomeres
     if (return_telomeres) {
         return(list(
             telomeres = telomeres,
             telomere_stats = stats_df,
-            file_list = file_list
+            combined_fasta = combined_fasta
         ))
     } else {
         return(list(
             telomere_stats = stats_df,
-            file_list = file_list
+            combined_fasta = combined_fasta
         ))
     }
 

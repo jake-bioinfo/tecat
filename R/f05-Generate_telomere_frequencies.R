@@ -114,7 +114,8 @@ frequencies <- function(windows,
     nms <- names(windows)
     freqs <- pbmcapply::pbmclapply(windows, function(w) {
         generate_telomere_frequencies(w, motifs)
-    }, mc.cores = threads)
+        }, mc.cores = threads, 
+        ignore.interactive = TRUE)
 
     # Assign names
     names(freqs) <- nms
