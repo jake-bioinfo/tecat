@@ -4,14 +4,14 @@
 #' @description telomere_matching takes in a fastq file and searches for telomere
 #' repeats in the sequences. It returns a list of sequences which
 #' contain telomere repeats and a list of statistics for each file.
-#' 
-#' @details The telomere_matching function extracts sequences containing telomere repeats 
-#' from a FASTQ file by searching for specified motifs and computes relevant statistics. 
-#' It reads the FASTQ file, identifies sequences with the motifs, and saves these 
-#' sequences to a file while also providing a summary of telomere-related statistics. 
-#' The function can return either just the statistics or both the statistics and the 
+#'
+#' @details The telomere_matching function extracts sequences containing telomere repeats
+#' from a FASTQ file by searching for specified motifs and computes relevant statistics.
+#' It reads the FASTQ file, identifies sequences with the motifs, and saves these
+#' sequences to a file while also providing a summary of telomere-related statistics.
+#' The function can return either just the statistics or both the statistics and the
 #' extracted sequences, depending on the return_telomeres parameter.
-#' 
+#'
 #' @param fastq_file A character string of the fastq file to search.
 #' @param names_prefix A character string to prefix the names of the telomere sequences.
 #' @param out_dir A character string of the output directory.
@@ -28,7 +28,6 @@ telomere_matching <- function(fastq_file,
                               grep_list = c("TTAGGG", "CCCTAA"),
                               return_telomeres = FALSE,
                               verbose = FALSE) {
-
     if (verbose) {
         message("Processing: ", fastq_file, "\n")
     }
@@ -40,7 +39,7 @@ telomere_matching <- function(fastq_file,
     }
 
     # Read in sequences
-    if(file_type == "application/fasta") {
+    if (file_type == "application/fasta") {
         sequences <- Biostrings::readDNAStringSet(
             filepath = fastq_file,
             format = "fasta"
@@ -67,8 +66,10 @@ telomere_matching <- function(fastq_file,
     telomere_sequences <- sequences[unique(indices)]
 
     # File Names
-    nm <- gsub(".fastq.gz|.fastq|.fq|.fa|.fasta.gz|.fasta",
-         "", basename(fastq_file))
+    nm <- gsub(
+        ".fastq.gz|.fastq|.fq|.fa|.fasta.gz|.fasta",
+        "", basename(fastq_file)
+    )
 
     # Collect telomere information
     telomere_info <- list(
@@ -97,25 +98,33 @@ telomere_matching <- function(fastq_file,
         telomere_sequences <- NULL
     }
 
-    # Save fasta
-    Biostrings::writeXStringSet(
-        x = telomere_sequences,
-        file = file.path(
-            out_dir,
-            paste0(
-                "telomeres_",
-                nm, ".fasta.gz")), 
-                format = "fasta", 
-                compress = TRUE)
-
-    # Return
-    if (return_telomeres) {
-        return(list(
-            telomeres = telomere_sequences,
-            telomere_stats = telomere_info
-        ))
-    } else {
+    if (is.null(telomere_sequences)) {
+        message("No telomere sequences found in ", nm, "\n")
         return(list(telomere_stats = telomere_info))
+    } else {
+        # Save fasta
+        Biostrings::writeXStringSet(
+            x = telomere_sequences,
+            file = file.path(
+                out_dir,
+                paste0(
+                    "telomeres_",
+                    nm, ".fasta.gz"
+                )
+            ),
+            format = "fasta",
+            compress = TRUE
+        )
+
+        # Return
+        if (return_telomeres) {
+            return(list(
+                telomeres = telomere_sequences,
+                telomere_stats = telomere_info
+            ))
+        } else {
+            return(list(telomere_stats = telomere_info))
+        }
     }
 
     # Clean up
@@ -129,23 +138,23 @@ telomere_matching <- function(fastq_file,
 ## repeats in the sequences. It returns a list of sequences which
 ## contain telomere repeats and a list of statistics for each file.
 #' @title Search for Telomeres
-#' @description \code{telo_search} takes as input a \code{list} of fastq files and 
-#' searches for telomere repeats in the sequences. It returns a 
+#' @description \code{telo_search} takes as input a \code{list} of fastq files and
+#' searches for telomere repeats in the sequences. It returns a
 #' list of sequences which contain telomere repeats (if \code{return_telomeres}: TRUE),
 #' a \code{data.table} of statistics for each file and a \code{list} of files.
 #' \code{return_telomeres} should only be TRUE when you have an exssesive amount of
 #' memory (RAM) to store the telomere sequences in the R session, roughly > 2 TB.
-#' 
-#' @details The telo_search function efficiently searches for telomere repeats across 
-#' a list of FASTQ files using parallel processing. It leverages the telomere_matching 
-#' function to analyze each file for telomere motifs, collecting sequences and statistics 
-#' such as average read length and percentage of telomere bases. The function runs these 
-#' searches concurrently with pbmcapply::pbmclapply, handles multiple threads, and can 
-#' optionally show progress updates. After processing, it compiles a data.table of statistics 
-#' and, based on the return_telomeres parameter, returns either a list of telomere sequences, 
-#' statistics, and file paths, or just the statistics and file paths. The function also manages 
+#'
+#' @details The telo_search function efficiently searches for telomere repeats across
+#' a list of FASTQ files using parallel processing. It leverages the telomere_matching
+#' function to analyze each file for telomere motifs, collecting sequences and statistics
+#' such as average read length and percentage of telomere bases. The function runs these
+#' searches concurrently with pbmcapply::pbmclapply, handles multiple threads, and can
+#' optionally show progress updates. After processing, it compiles a data.table of statistics
+#' and, based on the return_telomeres parameter, returns either a list of telomere sequences,
+#' statistics, and file paths, or just the statistics and file paths. The function also manages
 #' verbosity and output directory options to control the search process and results.
-#' 
+#'
 #' @param fastq_files A character vector of fastq files to search.
 #' @param grep_list A character vector of telomere motifs to search for.
 #' @param names_prefix A character string to prefix the names of the telomere sequences.
@@ -155,7 +164,7 @@ telomere_matching <- function(fastq_file,
 #' @param return_telomeres A logical of whether to return the telomere sequences.
 #' @param verbose A logical of whether to print messages.
 #' @param progress A logical of whether to show a progress bar.
-#' @return A \code{list} of telomere sequences (if \code{return_telomere}: is TRUE), 
+#' @return A \code{list} of telomere sequences (if \code{return_telomere}: is TRUE),
 #' \code{data.table} of statistics, and a file \code{list}.
 #' @export
 telo_search <- function(fastq_files = NULL,
@@ -167,7 +176,6 @@ telo_search <- function(fastq_files = NULL,
                         return_telomeres = FALSE,
                         verbose = FALSE,
                         progress = FALSE) {
-
     # Status message
     message(
         "Searching for telomeres in ", length(fastq_files), " files\n",
@@ -188,8 +196,8 @@ telo_search <- function(fastq_files = NULL,
         out_dir = out_dir,
         verbose = verbose,
         return_telomeres = return_telomeres,
-        mc.cores = threads, 
-        mc.style = "ETA", 
+        mc.cores = threads,
+        mc.style = "ETA",
         ignore.interactive = TRUE
     )
 
