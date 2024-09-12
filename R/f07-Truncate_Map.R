@@ -268,7 +268,7 @@ tecat_plot <- function(mapped_output = NULL,
   dir.create(out_dir, showWarnings = FALSE)
 
   # Plot
-  extrafont::loadfonts()
+#  extrafont::loadfonts()
   hist <- ggplot(mapped_output[["results"]], aes(x = telomere_length)) +
     geom_histogram(binwidth = 100, aes(fill = chromEnd, y = after_stat(density)), alpha = 0.3) +
     geom_density(alpha = 0.6, aes(y = after_stat(density), fill = chromEnd)) +
@@ -280,7 +280,7 @@ tecat_plot <- function(mapped_output = NULL,
       y = "Frequency",
       title = "Histogram of Telomere Lengths"
     ) +
-    theme(text = element_text(size = 22, family = "Arial"))
+    theme(text = element_text(size = 22))#, family = "Arial"))
 
 
   left <- mapped_output[["results"]][mapped_output[["results"]]$chromEnd == "5'", ]
@@ -303,7 +303,7 @@ tecat_plot <- function(mapped_output = NULL,
       title = "Telomere Lengths by Chromosome End 5'"
     ) +
     theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
-    theme(text = element_text(size = 18, family = "Arial")) +
+    theme(text = element_text(size = 18)) +#, family = "Arial")) +
     theme(legend.position = "none")
 
   bottom <- ggplot(right, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
@@ -316,7 +316,7 @@ tecat_plot <- function(mapped_output = NULL,
       title = "Telomere Lengths by Chromosome End 3'"
     ) +
     theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
-    theme(text = element_text(size = 18, family = "Arial")) +
+    theme(text = element_text(size = 18)) +#, family = "Arial")) +
     theme(legend.position = "none")
 
   grid <- plot_grid(top, bottom, ncol = 1)
