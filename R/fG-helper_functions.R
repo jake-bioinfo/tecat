@@ -1,3 +1,22 @@
+#' TECAT: Telomere End Chromosome Assaying Tool
+#' 
+#' @description 
+#' A package for determining chromosome end specific telomere lengths using pattern 
+#' matching with 3rd generation sequencing data.
+#'
+#' @details
+#' The main functions of this package are:
+#' \itemize{
+#'   \item Telomere motif identification
+#'   \item Pattern matching and analysis
+#'   \item Length calculation
+#'   \item Visualization
+#' }
+#'
+#' @docType package
+#' @name TECAT
+NULL
+
 ## This creates a mime map for other functions etc to use
 # Define a mapping of file extensions to corresponding MIME types
 library(mime)

@@ -15,8 +15,24 @@ Description: This application determines chromosome end specific
 	of sequenced samples. 
 Depends: R (>= 3.5)
 biocViews:
-Imports: ggplot2, GenomicRanges, Biostrings
-Suggests: knitr, rmarkdown, testthat
+Imports:
+    Biostrings (>= 2.60.0),
+    GenomicRanges (>= 1.42.0),
+    ggplot2 (>= 3.4.0),
+    dplyr (>= 1.0.0),
+    stringr (>= 1.5.0),
+    parallel,
+    pbmcapply,
+    cowplot,
+    zoo,
+    mime,
+    universalmotif
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    doSNOW,
+    extrafont
 License: GNU Public Version 3
 URL: https://github.com/jake-bioinfo/tld_dev
 VignetteBuilder: knitr
