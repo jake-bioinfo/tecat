@@ -35,13 +35,13 @@ library(Biostrings)
 #                              showWarnings = FALSE)
 
 # Sample name
-sample_name <- "HG004"
+sample_name <- "HG00732"
 
 # Create results directory
 #dir.create(file.path(paths$example_results, sample_name), 
 #           showWarnings = FALSE)
 
-sample_file <- file.path("/home/jake/tmp/comparative_study_temp/HG004/input/lr/HG004_lr.fastq")
+sample_file <- file.path("/home/jake/tmp/comparative_study_temp/HG00732/lr/ERR4987503-5.fastq")
 data_dir <- file.path("/home/jake/tmp/comparative_study_temp/tmp")
 results_dir <- file.path("/home/jake/tmp/comparative_study_temp/tmp/results")
 dir.create(data_dir, showWarnings = FALSE)
@@ -92,8 +92,7 @@ if(!file.exists(list.files(file.path(dirname(sample_file), "split"),
                           target_ram_size_gb = 2)
                           
   # Save stats
-  saveRDS(stats_fl, file.path(paths$example_results,
-                                sample_name, 
+  saveRDS(stats_fl, file.path(results_dir, 
                                 "stats_fl.rds"))
 }
 ```
@@ -104,7 +103,7 @@ if(!file.exists(list.files(file.path(dirname(sample_file), "split"),
 ## to add to dependencies
 source(file.path("R", "f02-Reference_Processing.R"))
 options(meme_bin = "~/meme/bin")
-reference_file <- file.path("/home/jake/tmp/comparative_study_temp/HG004/input/ref/hg002v1.0.1.fasta")
+reference_file <- file.path("/home/jake/science_projects/telo/shared_data/hs/ref/chm13v2.0.fa.gz")
 #reference <- readDNAStringSet(reference_file, format = "fasta")
 
 # Process reference file 
@@ -197,8 +196,7 @@ windows <- sliding_window_parallel(telomere_file = telo_file,
                                        )
 
 # Save windows                                       
-saveRDS(windows, file.path(paths$example_results, 
-                           sample_name, 
+saveRDS(windows, file.path(results_dir, 
                            "windows.rds"))
 # Satus
 cat("\nFinished processing all telomere files to sliding windows.", "\n")
@@ -210,26 +208,22 @@ cat("\nFinished processing all telomere files to sliding windows.", "\n")
 source(file.path("R", "f05-Generate_telomere_frequencies.R"))
 
 # Load in data 
-motif_analysis <- readRDS(file.path(paths$example_results, 
-                                    sample_name, 
+motif_analysis <- readRDS(file.path(results_dir,
                                     "motif_analysis_results.rds"))
 motifs <- as.character(motif_analysis$motifs)
 
 # Directories
-win_file <- file.path(paths$example_results, 
-        sample_name,
+win_file <- file.path(results_dir,
         "windows.rds")
 
 # For loop over all telomere windows files
 wins <- readRDS(win_file)
 length(wins)
 
-dir.create(file.path(paths$example_results, 
-                     sample_name, "frequencies"), 
+dir.create(file.path(results_dir, "frequencies"), 
            showWarnings = FALSE)
 
-out_dir = file.path(paths$example_results, 
-                    sample_name, 
+out_dir = file.path(results_dir, 
                     "frequencies")
 # Test
 freqs <- frequencies(windows = wins, 
@@ -243,8 +237,7 @@ freqs <- frequencies(windows = wins,
                      verbose = FALSE)
 
 # Save Frequencies
-saveRDS(freqs, file.path(paths$example_results,
-                         sample_name, 
+saveRDS(freqs, file.path(results_dir, 
                          "freqs.rds"))
 cat("\nNumber of telomeres found: ", length(freqs), "\n")
 cat("\nExample telomere frequencies:\n")
@@ -265,8 +258,7 @@ gc()
 ## analysis --!
 ```{r telomere_length, eval = TRUE}
 # Load data
-telomere_frequencies <- readRDS(file.path(paths$example_results,
-                                          sample_name,
+telomere_frequencies <- readRDS(file.path(results_dir,
                                           "freqs.rds"))
 
 # Source functions for determining telomere length
@@ -278,8 +270,7 @@ thresh_df <- determine_threshold(telomere_list = telomere_frequencies,
                                  sample_ratio = 0.025)
 
 # Save threshold data
-saveRDS(thresh_df, file.path(paths$example_results,
-                             sample_name, 
+saveRDS(thresh_df, file.path(results_dir,
                              "threshold_data.rds"))
 ```
 
@@ -288,11 +279,9 @@ saveRDS(thresh_df, file.path(paths$example_results,
 Need to look into why telomere lengths aren't being calculated for some reads.
 ```{r inspect_threshold_data, eval = TRUE}
 # Load data
-telomere_frequencies <- readRDS(file.path(paths$example_results,
-                                          sample_name,
+telomere_frequencies <- readRDS(file.path(results_dir,
                                           "freqs.rds"))
-thresh_df <- readRDS(file.path(paths$example_results,
-                               sample_name,
+thresh_df <- readRDS(file.path(results_dir,
                                "threshold_data.rds"))
 
 # Number of submitted telomeres
@@ -441,8 +430,7 @@ For now run all telomeres with start threshold of
 source(file.path("R", "f06-Telomere_length.R"))
 
 # Load data
-telomere_frequencies <- readRDS(file.path(paths$example_results,
-                                          sample_name,
+telomere_frequencies <- readRDS(file.path(results_dir,
                                           "freqs.rds"))
 
 # Run findtellength over all telomeres in parallel
@@ -463,8 +451,7 @@ results_df <- do.call(rbind.data.frame, results)
 head(results_df)
 
 # Save results
-saveRDS(results_df, file.path(paths$example_results,
-                              sample_name, 
+saveRDS(results_df, file.path(results_dir, 
                               "results_df.rds"))
 
 ## This is very interesting
@@ -500,8 +487,7 @@ print(paste0("Total time: ", end_time - start_time))
 source(file.path("R", "fG-helper_functions.R"))
 source(file.path("R", "f07-Truncate_Map.R"))
 # Load data
-results_df <- readRDS(file.path(paths$example_results,
-                                sample_name, 
+results_df <- readRDS(file.path(results_dir, 
                                 "results_df.rds"))
 
 # Remove NAs
@@ -509,24 +495,20 @@ results_df <- results_df[!is.na(results_df$telomere_end), ]
 ls()
 find_sizes()
 
-data_dir <- file.path(paths$example_data, "data", 
-                      "ONT_duplex")
-
 telomeres_file <- list.files(file.path(data_dir, "telo"), 
   pattern = "combined", full.names = TRUE)
-ref_file <- file.path(paths$example_data, "ref", "hg002v1.0.1.fasta.gz")
+ref_file <- reference_file
 
 # Truncate telomeres
 trunc_dir <- file.path(data_dir, "trunc")
 dir.create(trunc_dir, showWarnings = FALSE)
 
 # Truncate files
-fasta_fl <- truncate_files(combined_telomere_file = telomeres_file, 
+fasta_fl <- truncate_file(combined_telomere_file = telomeres_file, 
                results_data_frame = results_df,
                out_dir = trunc_dir, 
                write_file = TRUE,
-               return = FALSE,
-               progress = TRUE)
+               return = FALSE)
 
 # Map reads to reference
 combined_fasta <- file.path(trunc_dir, "truncated_reads.fa")
@@ -543,16 +525,14 @@ mapped_output <- map(fasta = combined_fasta,
                      threads = 18)
 
 # Save mapped output
-saveRDS(mapped_output, file.path(paths$example_results,
-                                 sample_name, 
+saveRDS(mapped_output, file.path(results_dir, 
                                  "mapped_output.rds"))
 ```
 
 # Plotting
 ```{r violin_plot, eval = TRUE, fig.width = 12, fig.height = 8}
 # Load data
-mapped_output <- readRDS(file.path(paths$example_results,
-                                   sample_name,
+mapped_output <- readRDS(file.path(results_dir,
                                    "mapped_output.rds"))
 mapped_output$results$sample <- sample_name
 

@@ -143,7 +143,6 @@ map <- function(fasta = NULL,
                 prefix = "mapped",
                 threads = 1, 
                 return_mapped = TRUE,
-                underscore = TRUE,
                 verbose = TRUE) {
 
   # Check inputs
@@ -192,21 +191,31 @@ map <- function(fasta = NULL,
   # Add chromosomal end
   ## Load reference to get lengths
   ref <- Biostrings::readDNAStringSet(reference_file)
-  # Only take the character string before the first space
-  if (underscore) {
-    chromosomes <- gsub("_.*", "", names(ref))
-    results$ref_name <- gsub("_.*", "", results$ref_name)
-    lengths <- data.frame(chromosome = chromosomes,
-      length = Biostrings::width(ref))
-    lengths <- distinct(lengths, chromosome, .keep_all = TRUE)
-    ord <- order(as.numeric(stringr::str_extract(lengths$chromosome, "\\d+")))
-    lengths <- lengths[ord,]
-  } else {
-    chromosomes <- gsub(" .*", "", names(ref))
-    lengths <- data.frame(chromosome = chromosomes,
-      length = Biostrings::width(ref))
-  }
+  nms <- names(ref)
+  
+  # Isolate chromosome names
+  chromosome <- stringr::str_extract(nms, "chr[[:alnum:]]+")
+  results$ref_name <- stringr::str_extract(results$ref_name, "chr[[:alnum:]]+")
+  lengths <- data.frame(chromosome = chromosome,
+                        length = Biostrings::width(ref))
+  lengths <- dplyr::distinct(lengths, chromosome, .keep_all = TRUE)
+  ord <- order(as.numeric(stringr::str_extract(lengths$chromosome, "\\d+")))
+  lengths <- lengths[ord,]
 
+  # Only take the character string before the first space
+  # if (underscore) {
+  #   chromosomes <- gsub("_.*", "", names(ref))
+  #   results$ref_name <- gsub("_.*", "", results$ref_name)
+  #   lengths <- data.frame(chromosome = chromosomes,
+  #     length = Biostrings::width(ref))
+  #   lengths <- distinct(lengths, chromosome, .keep_all = TRUE)
+  #   ord <- order(as.numeric(stringr::str_extract(lengths$chromosome, "\\d+")))
+  #   lengths <- lengths[ord,]
+  # } else {
+  #   chromosomes <- gsub(" .*", "", names(ref))
+  #   lengths <- data.frame(chromosome = chromosomes,
+  #     length = Biostrings::width(ref))
+  # }
 
   # Clean up some
   rm(bam_df, ref)
