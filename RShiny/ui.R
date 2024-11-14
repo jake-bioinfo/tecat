@@ -1,3 +1,13 @@
+#**************************************************************
+#-                     TLD SHINY UI
+#-                Oelkuct, M., Reed, J. 
+#-
+#**************************************************************
+
+#**************************************************************
+#- Libraries
+#**************************************************************
+
 library(shiny)
 library(dplyr)
 library(shinydashboard)
@@ -10,7 +20,17 @@ library(parallel)
 library(foreach)
 library(doParallel)
 library(shinyjs)
+for (pkg in c('shiny', 'dplyr', 'shinydashboard', 'plyr', 'plotly', 'optparse',
+              'stats', 'parallel', 'foreach', 'doParallel', 'shinyjs')){
+  suppressPackageStartupMessages()
+}
 
+
+#**************************************************************
+#- Functions
+#**************************************************************
+
+#- Minimal file input button
 fileInputNoExtra<-function(inputId, label, multiple = FALSE, accept = NULL, width = NULL, buttonLabel = "Browse...", placeholder = "No file selected"){
   
   restoredValue <- restoreInput(id = inputId, default = NULL)
@@ -33,6 +53,12 @@ fileInputNoExtra<-function(inputId, label, multiple = FALSE, accept = NULL, widt
              span(class = "btn btn-default btn-file",type="button", buttonLabel, inputTag, style=if (!is.null(width)) paste0("width: ", validateCssUnit(width),";","border-radius: 5px; padding-bottom: 5px;"))
   )
 }
+
+
+#**************************************************************
+#- Layout
+#**************************************************************
+
 body <- dashboardBody(
   fluidRow(
     tabBox(
@@ -193,6 +219,5 @@ sidebar <- dashboardSidebar(
 ui = dashboardPage(
   dashboardHeader(title = "TeCAT"),
   sidebar,
-  
   body
 )
