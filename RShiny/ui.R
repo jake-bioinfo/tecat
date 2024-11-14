@@ -8,23 +8,10 @@
 #- Libraries
 #**************************************************************
 
-library(shiny)
-library(dplyr)
-library(shinydashboard)
-library(ggplot2)
-library(plyr)
-library(plotly)
-library(optparse)
-library(stats)
-library(parallel)
-library(foreach)
-library(doParallel)
-library(shinyjs)
-for (pkg in c('shiny', 'dplyr', 'shinydashboard', 'plyr', 'plotly', 'optparse',
+for (pkg in c('shiny', 'dplyr', 'shinydashboard', 'ggplot2', 'plyr', 'plotly', 'optparse',
               'stats', 'parallel', 'foreach', 'doParallel', 'shinyjs')){
-  suppressPackageStartupMessages()
+  suppressPackageStartupMessages(library(pkg, character.only = TRUE))
 }
-
 
 #**************************************************************
 #- Functions
