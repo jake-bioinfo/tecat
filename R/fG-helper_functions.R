@@ -13,9 +13,10 @@
 #'   \item Visualization
 #' }
 #'
-#' @docType package
-#' @name TECAT
-NULL
+#' @author Jake Reed and Mark Oelkuct
+#' @aliases TECAT
+"_PACKAGE"
+
 
 ## This creates a mime map for other functions etc to use
 # Define a mapping of file extensions to corresponding MIME types

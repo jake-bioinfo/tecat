@@ -35,10 +35,10 @@ repeats in the sequences. It returns a list of sequences which
 contain telomere repeats and a list of statistics for each file.
 }
 \details{
-The telomere_matching function extracts sequences containing telomere repeats 
-from a FASTQ file by searching for specified motifs and computes relevant statistics. 
-It reads the FASTQ file, identifies sequences with the motifs, and saves these 
-sequences to a file while also providing a summary of telomere-related statistics. 
-The function can return either just the statistics or both the statistics and the 
+The telomere_matching function extracts sequences containing telomere repeats
+from a FASTQ file by searching for specified motifs and computes relevant statistics.
+It reads the FASTQ file, identifies sequences with the motifs, and saves these
+sequences to a file while also providing a summary of telomere-related statistics.
+The function can return either just the statistics or both the statistics and the
 extracted sequences, depending on the return_telomeres parameter.
 }

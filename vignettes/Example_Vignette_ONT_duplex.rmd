@@ -1,57 +1,82 @@
 ---
-title: "TLD Example Vignette ONT Duplex Data"
+title: "Processing ONT Duplex Samples"
 author: "Jake Reed"
-date: '`r Sys.Date()`'
-output:
-  html_document: 
-    theme: simplex
-    highlight: tango
-    toc: yes
-  pdf_document:
-    highlight: tango
-    toc: yes
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Processing ONT Duplex Samples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-        echo = TRUE,
-        collapse = TRUE,
-        comment = "#>"
+  echo = TRUE,
+  collapse = TRUE,
+  comment = "#>"
 )
 ```
 
 # 1. Installation
+This package depends on MEME and minimap2. MEME is a motif analysis tool which is used to determine the most common telomere motifs in a reference genome. Minimap2 is a read aligner which is used to align reads to the reference genome. Both of these tools are required for the package to run.
+## Install MEME
+Download the software from https://meme-suite.org/doc/download.html
+Type the following commands: 
+
+```{bash, eval = FALSE}
+tar -zxf meme-5.5.7.tar.gz
+cd meme-5.5.7
+./configure --prefix=$HOME/meme --enable-build-libxml2 --enable-build-libxslt
+make
+make test
+make install
+
+# Edit your shell configuration file to add $HOME/meme/bin and $HOME/meme/libexec/meme-5.5.7 to your shell's path. This can often be done by editing the file named .profile to add the following line:
+
+export PATH=$HOME/meme/bin:$HOME/meme/libexec/meme-5.5.7:$PATH
+```
+
+## Install minimap2
+```{bash, eval = FALSE}
+git clone https://github.com/lh3/minimap2
+cd minimap2 && make
+```
+
+
+## Data
+The data for running this full vignette can be downloaded from the SRA database using the following commands:
+A section of this vignette from [fill in later] to the end can be run using [fill in later] data from within the package.
+```{bash, eval = FALSE}
+# Download SRA toolkit
+wget --output-document sratoolkit.tar.gz https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
+tar -vxzf sratoolkit.tar.gz
+export PATH=$PATH:$PWD/sratoolkit.3.0.0-mac64/bin
+
+# Download fastq file
+prefetch --progress --resume yes -X 500G ERR11028096
+fastq-dump ERR11028096
+```
 
 # 2. Showcase
-
-## Import Functions
-```{r source}
-#source("00-paths.R")
-source(file.path("R", "fG-helper_functions.R"))
+## Load Libraries and Samples
+```{r setup}
+# Load libraries
 library(Biostrings)
-
-# Create directories
-#for (dir in paths) dir.create(file.path(dir), 
-#                              showWarnings = FALSE)
+library(TECAT)
+library(ggplot2)
+library(cowplot)
 
 # Sample name
-sample_name <- "HG00732"
+sample_name <- "HG03065"
 
-# Create results directory
-#dir.create(file.path(paths$example_results, sample_name), 
-#           showWarnings = FALSE)
-
-sample_file <- file.path("/home/jake/tmp/comparative_study_temp/HG00732/lr/ERR4987503-5.fastq")
-data_dir <- file.path("/home/jake/tmp/comparative_study_temp/tmp")
-results_dir <- file.path("/home/jake/tmp/comparative_study_temp/tmp/results")
-dir.create(data_dir, showWarnings = FALSE)
+sample_file <- file.path(paste0("~/tmp/comparative_study_temp/", sample_name, ".fastq"))
+reference_file <- file.path("~/tmp/comparative_study_temp/ref/chm13v2.0.fa.gz")
+data_dir <- tempdir()
+results_dir <- file.path("~/tmp/comparative_study_temp", sample_name, "results")
 dir.create(results_dir, showWarnings = FALSE)
 
-# Set width
+# Set options
 options(width = 300)
-
-# Start timer
-start_time <- Sys.time()
+options(meme_bin = "~/meme/bin")
 ```
 
 ## Process Fastq
@@ -61,143 +86,129 @@ total RAM for your machine. The fastq file can be downloaded from the SRA databa
 SRA toolkit. Here are the commands you would use to download the fastq file for this
 experiment. 
 
-<!-- ```{bash}
-# Download SRA toolkit
-wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/3.0.7/sratoolkit.3.0.7-ubuntu64.tar.gz
-tar -xzf sratoolkit.3.0.7-ubuntu64.tar.gz
-cd sratoolkit.3.0.7-ubuntu64/bin
-data_dir=r file.path(paths$example_data, "data")
-echo $data_dir
-
-# Download fastq file
-./prefetch --progress --resume yes --output-directory $data_dir SRR11008518
-
-# Convert to fastq
-./fastq-dump --split-3 -A $data_dir/SRR11008518/SRR11008518.sra -outdir $data_dir/split
-``` -->
-
 ```{r Split_Fastq, eval = FALSE}
-source(file.path("R", "f01-Fastq_Processing.R"))
-
 # Split large fastq file into files that will occupy
 # 2GB of RAM in order to take advantage of all processors
 # (20) with given RAM (62GB).
-if(!file.exists(list.files(file.path(dirname(sample_file), "split"), 
-                           full.names = TRUE)[1])) {
-   stats_fl <- auto_split(in_fastq = sample_file,
-                          prefix = "HG004", 
-                          threads = 18, 
-                          extension = ".gz",
-                          out_dir = file.path(data_dir, "split"), 
-                          target_ram_size_gb = 2)
-                          
+if (!file.exists(list.files(file.path(dirname(sample_file), "split"),
+  full.names = TRUE
+)[1])) {
+  stats_fl <- auto_split(
+    in_fastq = sample_file,
+    prefix = sample_name,
+    threads = 18,
+    out_dir = file.path(data_dir, "split"),
+    target_ram_size_gb = 2
+  )
+
   # Save stats
-  saveRDS(stats_fl, file.path(results_dir, 
-                                "stats_fl.rds"))
+  saveRDS(stats_fl, file.path(
+    results_dir,
+    "stats_fl.rds"
+  ))
 }
 ```
 
 ## Process Reference Fastq
-```{r process_reference, eval = TRUE}
-## Switching denovo motif analysis to streme from meme suite, need 
-## to add to dependencies
-source(file.path("R", "f02-Reference_Processing.R"))
-options(meme_bin = "~/meme/bin")
-reference_file <- file.path("/home/jake/science_projects/telo/shared_data/hs/ref/chm13v2.0.fa.gz")
-#reference <- readDNAStringSet(reference_file, format = "fasta")
-
-# Process reference file 
-# # PB Settings
-# motif_analysis <- telomere_motif(data_ref = reference,
-#                                  reference_telo_length = 2000,
-#                                  telo_motif_length = 6, 
-#                                  number_of_motifs = 10,
-#                                  number_of_repeats = 9, 
-#                                  platform = "PB",
-#                                  threads = 18)
-
+```{r denovo motif finding, eval = FALSE}
 # ONT Settings
-motif_analysis <- telomere_motif(reference_file = reference_file,
-                                 reference_telo_length = 2000,
-                                 telo_motif_length = 6, 
-                                 number_of_motifs = 10,
-                                 number_of_repeats = 10, 
-                                 platform = "ONT",
-                                 threads = 18)
+motif_analysis <- telomere_motif(
+  reference_file = reference_file,
+  reference_telo_length = 2000,
+  telo_motif_length = 6,
+  number_of_motifs = 10,
+  number_of_repeats = 10,
+  platform = "ONT",
+  threads = 18
+)
 
 print(paste("Number of motifs found: ", length(motif_analysis$motifs)))
 cat("\n")
-print(paste("Grep pattern for pattern matching and initial search: ", 
-            motif_analysis$grep_list))
+print(paste(
+  "Grep pattern for pattern matching and initial search: ",
+  motif_analysis$grep_list
+))
 
 # Save results
 saveRDS(motif_analysis, file.path(results_dir, "motif_analysis_results.rds"))
 
 # Clean up
-rm(list = c("reference_file", "reference"))
 gc()
 ```
 
 ## Isolate telomere reads
-```{r telo_search, eval = TRUE}
-motif_analysis <- readRDS(file.path(results_dir,
-                                    "motif_analysis_results.rds"))
-                                    
-# Source functions for pattern searching
-source(file.path("R", "f03-Pattern_searching.R"))
-
+```{r telo_search, eval = FALSE}
 # Run pattern searh on all split fastq files
-file_list <- list.files(file.path(data_dir, "split"), 
-                        full.names = TRUE)
+file_list <- list.files(file.path(data_dir, "split"),
+  full.names = TRUE
+)
 
 # Create output directory
 out <- file.path(data_dir, "telo")
 dir.create(out, showWarnings = FALSE)
 
-# Search telomeres 
+# Search telomeres
 ## Need to explain in documentation that threads should match number of files
-search_res <- telo_search(fastq_files = file_list, 
-                          grep_list = motif_analysis$grep_list,
-                          threads = 14, 
-                          out_dir = out,
-                          return_telomeres = FALSE,
-                          verbose = TRUE, 
-                          progress = TRUE
-                          )
+## This function requires > 4 GB of memory per thread. 
+search_res <- telo_search(
+  fastq_files = file_list,
+  grep_list = motif_analysis$grep_list,
+  threads = 14,
+  out_dir = out,
+  return_telomeres = FALSE,
+  verbose = FALSE,
+  progress = TRUE
+)
+
+# Print some basic telomere finding statistics
 head(search_res$telomere_stats)
+
+# Save telomere_stats
+saveRDS(search_res, file.path(
+  results_dir,
+  "telomere_stats.rds"
+))
 
 # Clean up
 rm(list = c("file_list", "out"))
 gc()
-
-# Save telomere_stats
-saveRDS(search_res, file.path(results_dir,
-                                  "telomere_stats.rds"))
 ```
 
 ## Cut telomere reads into sliding windows
+## If you are running this vignette without the full data set, start here and run this opts_chunk
+```{r load telomere file, eval = TRUE}
+
+
+```
+
 ```{r telo_cut, eval = TRUE}
-telomere_stats <- readRDS(file.path(results_dir, 
-                                    "telomere_stats.rds"))
+telomere_stats <- readRDS(file.path(
+  results_dir,
+  "telomere_stats.rds"
+))
 
 telo_file <- list.files(file.path(data_dir, "telo"),
-                        pattern = "combined",
-                        full.names = TRUE)
+  pattern = "combined",
+  full.names = TRUE
+)
 
 # Source functions for cutting telomere reads into sliding windows
 source(file.path("R", "f04-Sliding_window.R"))
 
 # Run sliding window on all telomere files
-windows <- sliding_window_parallel(telomere_file = telo_file, 
-                                       window_length = 200,
-                                       step = 100, 
-                                       environment = "linux",
-                                       threads = 18,
-                                       )
+windows <- sliding_window_parallel(
+  telomere_file = telo_file,
+  window_length = 200,
+  step = 100,
+  environment = "linux",
+  threads = 18,
+)
 
-# Save windows                                       
-saveRDS(windows, file.path(results_dir, 
-                           "windows.rds"))
+# Save windows
+saveRDS(windows, file.path(
+  results_dir,
+  "windows.rds"
+))
 # Satus
 cat("\nFinished processing all telomere files to sliding windows.", "\n")
 ```
@@ -207,38 +218,49 @@ cat("\nFinished processing all telomere files to sliding windows.", "\n")
 # Source functions for calculating telomere motif frequencies
 source(file.path("R", "f05-Generate_telomere_frequencies.R"))
 
-# Load in data 
-motif_analysis <- readRDS(file.path(results_dir,
-                                    "motif_analysis_results.rds"))
+# Load in data
+motif_analysis <- readRDS(file.path(
+  results_dir,
+  "motif_analysis_results.rds"
+))
 motifs <- as.character(motif_analysis$motifs)
 
 # Directories
-win_file <- file.path(results_dir,
-        "windows.rds")
+win_file <- file.path(
+  results_dir,
+  "windows.rds"
+)
 
 # For loop over all telomere windows files
 wins <- readRDS(win_file)
 length(wins)
 
-dir.create(file.path(results_dir, "frequencies"), 
-           showWarnings = FALSE)
+dir.create(file.path(results_dir, "frequencies"),
+  showWarnings = FALSE
+)
 
-out_dir = file.path(results_dir, 
-                    "frequencies")
+out_dir <- file.path(
+  results_dir,
+  "frequencies"
+)
 # Test
-freqs <- frequencies(windows = wins, 
-                     motifs = motifs, 
-                     environment = "linux", 
-                     parallel = TRUE, 
-                     threads = 18, 
-                     save_files = TRUE,
-                     progress = TRUE,
-                     out_dir = out_dir,
-                     verbose = FALSE)
+freqs <- frequencies(
+  windows = wins,
+  motifs = motifs,
+  environment = "linux",
+  parallel = TRUE,
+  threads = 18,
+  save_files = TRUE,
+  progress = TRUE,
+  out_dir = out_dir,
+  verbose = FALSE
+)
 
 # Save Frequencies
-saveRDS(freqs, file.path(results_dir, 
-                         "freqs.rds"))
+saveRDS(freqs, file.path(
+  results_dir,
+  "freqs.rds"
+))
 cat("\nNumber of telomeres found: ", length(freqs), "\n")
 cat("\nExample telomere frequencies:\n")
 knitr::kable(head(freqs[[1]]))
@@ -246,10 +268,12 @@ cat("\n...")
 knitr::kable(tail(freqs[[1]]))
 
 # Clean up
-rm(list = setdiff(ls(), c("freqs", 
-                          "paths", 
-                          "sample_name", 
-                          "start_time")))
+rm(list = setdiff(ls(), c(
+  "freqs",
+  "paths",
+  "sample_name",
+  "start_time"
+)))
 gc()
 ```
 
@@ -258,20 +282,26 @@ gc()
 ## analysis --!
 ```{r telomere_length, eval = TRUE}
 # Load data
-telomere_frequencies <- readRDS(file.path(results_dir,
-                                          "freqs.rds"))
+telomere_frequencies <- readRDS(file.path(
+  results_dir,
+  "freqs.rds"
+))
 
 # Source functions for determining telomere length
 source(file.path("R", "f06-Telomere_length.R"))
 
 # Threshold determination
-thresh_df <- determine_threshold(telomere_list = telomere_frequencies,
-                                 threads = 18, 
-                                 sample_ratio = 0.025)
+thresh_df <- determine_threshold(
+  telomere_list = telomere_frequencies,
+  threads = 18,
+  sample_ratio = 0.025
+)
 
 # Save threshold data
-saveRDS(thresh_df, file.path(results_dir,
-                             "threshold_data.rds"))
+saveRDS(thresh_df, file.path(
+  results_dir,
+  "threshold_data.rds"
+))
 ```
 
 # Explore data
@@ -279,25 +309,35 @@ saveRDS(thresh_df, file.path(results_dir,
 Need to look into why telomere lengths aren't being calculated for some reads.
 ```{r inspect_threshold_data, eval = TRUE}
 # Load data
-telomere_frequencies <- readRDS(file.path(results_dir,
-                                          "freqs.rds"))
-thresh_df <- readRDS(file.path(results_dir,
-                               "threshold_data.rds"))
+telomere_frequencies <- readRDS(file.path(
+  results_dir,
+  "freqs.rds"
+))
+thresh_df <- readRDS(file.path(
+  results_dir,
+  "threshold_data.rds"
+))
 
 # Number of submitted telomeres
-print(paste0("Number of submitted telomeres: ", length(telomere_frequencies), 
-        "\n"))
+print(paste0(
+  "Number of submitted telomeres: ", length(telomere_frequencies),
+  "\n"
+))
 
 # Debugging
 na_indices <- which(is.na(thresh_df$start[[50]]$telomere_end))
 misfits <- telomere_frequencies[na_indices]
 # Test all indices are NA
-print(paste0("Number of NA (misassigned) telomeres: ", length(misfits), 
-        "\n"))
+print(paste0(
+  "Number of NA (misassigned) telomeres: ", length(misfits),
+  "\n"
+))
 
 # Fraction misassigned at best threshold
-print(paste0("Fraction misassigned at 50-50 threshold: ",
-        length(misfits) / length(telomere_frequencies), "\n"))
+print(paste0(
+  "Fraction misassigned at 50-50 threshold: ",
+  length(misfits) / length(telomere_frequencies), "\n"
+))
 
 # Look into first read problem
 ref_lens <- thresh_df$start[[50]]
@@ -305,36 +345,46 @@ head(ref_lens, 50)
 
 # Look at average length in telomeres
 telomere_lengths <- ref_lens$telomere_length[!is.na(ref_lens$telomere_end)]
-print(paste0("Mean telomere length at 50-50 without NA: ", mean(telomere_lengths), 
-        "\n"))
+print(paste0(
+  "Mean telomere length at 50-50 without NA: ", mean(telomere_lengths),
+  "\n"
+))
 
 # Create histogrma of telomere lengths
-hist(telomere_lengths, breaks = sqrt(length(telomere_lengths)), 
-     main = "Histogram of Telomere Lengths", 
-     xlab = "Telomere Length (bp)", 
-     ylab = "Frequency")
+hist(telomere_lengths,
+  breaks = sqrt(length(telomere_lengths)),
+  main = "Histogram of Telomere Lengths",
+  xlab = "Telomere Length (bp)",
+  ylab = "Frequency"
+)
 
 # Less than 2k length
-ind_2k <- which(telomere_lengths < 2000 & 
-                !is.na(telomere_lengths) &
-                telomere_lengths > 0)
+ind_2k <- which(telomere_lengths < 2000 &
+  !is.na(telomere_lengths) &
+  telomere_lengths > 0)
 print(paste0("Number of telomeres less than 2kbp: ", length(ind_2k), "\n"))
 less_2k <- telomere_lengths[ind_2k]
-print(paste0("Mean of telomere lengths at 50-50 which were less than 2 kbp: ", 
-        mean(less_2k), "\n"))
+print(paste0(
+  "Mean of telomere lengths at 50-50 which were less than 2 kbp: ",
+  mean(less_2k), "\n"
+))
 # breaks <- ifelse(length(less_2k) < 10, 1, sqrt(length(less_2k)))
-# hist(less_2k, breaks = breaks, 
-#      main = "Histogram of Telomere Lengths < 2kbp", 
-#      xlab = "Telomere Length (bp)", 
+# hist(less_2k, breaks = breaks,
+#      main = "Histogram of Telomere Lengths < 2kbp",
+#      xlab = "Telomere Length (bp)",
 #      ylab = "Frequency")
 
 minus_2k <- telomere_lengths[which(telomere_lengths > 2000)]
-print(paste0("Mean of telomere lengths at 50-50 which were greater than 2 kbp: ", 
-        mean(minus_2k), "\n"))
-hist(minus_2k, breaks = sqrt(length(minus_2k)), 
-     main = "Histogram of Telomere Lengths > 2kbp", 
-     xlab = "Telomere Length (bp)", 
-     ylab = "Frequency")
+print(paste0(
+  "Mean of telomere lengths at 50-50 which were greater than 2 kbp: ",
+  mean(minus_2k), "\n"
+))
+hist(minus_2k,
+  breaks = sqrt(length(minus_2k)),
+  main = "Histogram of Telomere Lengths > 2kbp",
+  xlab = "Telomere Length (bp)",
+  ylab = "Frequency"
+)
 ```
 
 # Find optimal thresholds
@@ -351,29 +401,36 @@ shows telomere length.
 ```{r formatting, eval =  FALSE}
 # Start sensitivity
 start_number_of_telos <- unlist(lapply(thresh_df$start, function(x) {
-  length(which(!is.na(x$telomere_end)))}))
-sensitivity_df <- data.frame(start = seq(1, 100, 1), 
-                             end = rep(5, 100), 
-                             number_of_telos = start_number_of_telos)
+  length(which(!is.na(x$telomere_end)))
+}))
+sensitivity_df <- data.frame(
+  start = seq(1, 100, 1),
+  end = rep(5, 100),
+  number_of_telos = start_number_of_telos
+)
 
 # Telomere length
 # End telomere length
 telomere_lengths_end <- lapply(thresh_df$end, function(x) {
   vals <- x$telomere_length[!is.na(x$telomere_end)]
   x <- mean(vals)
-  if(x != 0 & length(vals) > 1) {
+  if (x != 0 & length(vals) > 1) {
     std_dev <- sd(vals)
   } else {
     std_dev <- 0
   }
-  ret_frame <- data.frame(mean = x,
-                          std_dev = std_dev)
+  ret_frame <- data.frame(
+    mean = x,
+    std_dev = std_dev
+  )
   return(ret_frame)
 })
 end_df <- do.call(rbind, telomere_lengths_end)
-telomere_length_df <- cbind(start = rep(20, 100), 
-                            end = seq(1, 100, 1), 
-                            end_df)
+telomere_length_df <- cbind(
+  start = rep(20, 100),
+  end = seq(1, 100, 1),
+  end_df
+)
 
 # Print data
 print(paste0("\nStart sensitivity data:"))
@@ -398,18 +455,22 @@ sens_plot <- ggplot(sensitivity_df, aes(x = start, y = number_of_telos)) +
   geom_line() +
   geom_point() +
   geom_vline(xintercept = thresholds$sensitivity, color = "red") +
-  labs(x = "Start Threshold", 
-       y = "Number of Telomeres", 
-       title = "Telomere Sensitivity") +
+  labs(
+    x = "Start Threshold",
+    y = "Number of Telomeres",
+    title = "Telomere Sensitivity"
+  ) +
   theme_bw()
 
 telomere_plot <- ggplot(telomere_length_df, aes(x = end, y = mean)) +
   geom_line() +
   geom_point() +
   geom_vline(xintercept = thresholds$telomere, color = "red") +
-  labs(x = "End Threshold", 
-       y = "Telomere Length", 
-       title = "Telomere Length") +
+  labs(
+    x = "End Threshold",
+    y = "Telomere Length",
+    title = "Telomere Length"
+  ) +
   theme_bw()
 
 plot_grid(sens_plot, telomere_plot, ncol = 2)
@@ -419,8 +480,6 @@ best_start <- sensitivity_df$start[which.max(sensitivity_df$number_of_telos)]
 print(paste0("\nBest start threshold: ", best_start, "\n"))
 best_end <- telomere_length_df$end[which.max(telomere_length_df$mean)]
 print(paste0("\nBest end threshold: ", best_end, "\n"))
-
-
 ```
 
 ## Determine optimal thresholds
@@ -430,20 +489,25 @@ For now run all telomeres with start threshold of
 source(file.path("R", "f06-Telomere_length.R"))
 
 # Load data
-telomere_frequencies <- readRDS(file.path(results_dir,
-                                          "freqs.rds"))
+telomere_frequencies <- readRDS(file.path(
+  results_dir,
+  "freqs.rds"
+))
 
 # Run findtellength over all telomeres in parallel
 library(parallel)
 # Setup parallel environment
 cl <- parallel::makeCluster(18)
-parallel::clusterExport(cl, c("findTelLength"), 
-                        envir = environment())
+parallel::clusterExport(cl, c("findTelLength"),
+  envir = environment()
+)
 invisible(parallel::clusterEvalQ(cl, require(plyr)))
 
-results <- invisible(parallel::parLapply(cl, telomere_frequencies, 
-                                         findTelLength, st.thresh = thresholds$sensitivity, 
-                                         en.thresh = thresholds$telomere_length))
+results <- invisible(parallel::parLapply(cl, telomere_frequencies,
+  findTelLength,
+  st.thresh = thresholds$sensitivity,
+  en.thresh = thresholds$telomere_length
+))
 parallel::stopCluster(cl)
 
 results_df <- do.call(rbind.data.frame, results)
@@ -451,17 +515,19 @@ results_df <- do.call(rbind.data.frame, results)
 head(results_df)
 
 # Save results
-saveRDS(results_df, file.path(results_dir, 
-                              "results_df.rds"))
+saveRDS(results_df, file.path(
+  results_dir,
+  "results_df.rds"
+))
 
 ## This is very interesting
 # saveRDS(results_df, file.path(paths$example_results,
-#                               sample_name, 
+#                               sample_name,
 #                               "results_df_interesting.rds"))
 
 # Look at average length in telomeres
-telomere_lengths <- results_df$telomere_length[which(!is.na(results_df$telomere_end) & 
-                                               results_df$telomere_length > 0)]
+telomere_lengths <- results_df$telomere_length[which(!is.na(results_df$telomere_end) &
+  results_df$telomere_length > 0)]
 
 # Print fraction na
 print(paste0("Fraction NA: ", sum(is.na(results_df$telomere_end)) / nrow(results_df)))
@@ -472,10 +538,12 @@ wo_na <- results_df[!is.na(results_df$telomere_end), ]
 print(paste0("Mean telomere length at 20-15 without NA: ", mean(wo_na$telomere_length)))
 
 # Create histogrma of telomere lengths
-hist(telomere_lengths, breaks = sqrt(length(telomere_lengths)), 
-     main = "Histogram of Telomere Lengths", 
-     xlab = "Telomere Length (bp)", 
-     ylab = "Frequency")
+hist(telomere_lengths,
+  breaks = sqrt(length(telomere_lengths)),
+  main = "Histogram of Telomere Lengths",
+  xlab = "Telomere Length (bp)",
+  ylab = "Frequency"
+)
 
 end_time <- Sys.time()
 print(paste0("Total time: ", end_time - start_time))
@@ -487,16 +555,19 @@ print(paste0("Total time: ", end_time - start_time))
 source(file.path("R", "fG-helper_functions.R"))
 source(file.path("R", "f07-Truncate_Map.R"))
 # Load data
-results_df <- readRDS(file.path(results_dir, 
-                                "results_df.rds"))
+results_df <- readRDS(file.path(
+  results_dir,
+  "results_df.rds"
+))
 
 # Remove NAs
 results_df <- results_df[!is.na(results_df$telomere_end), ]
 ls()
 find_sizes()
 
-telomeres_file <- list.files(file.path(data_dir, "telo"), 
-  pattern = "combined", full.names = TRUE)
+telomeres_file <- list.files(file.path(data_dir, "telo"),
+  pattern = "combined", full.names = TRUE
+)
 ref_file <- reference_file
 
 # Truncate telomeres
@@ -504,11 +575,13 @@ trunc_dir <- file.path(data_dir, "trunc")
 dir.create(trunc_dir, showWarnings = FALSE)
 
 # Truncate files
-fasta_fl <- truncate_file(combined_telomere_file = telomeres_file, 
-               results_data_frame = results_df,
-               out_dir = trunc_dir, 
-               write_file = TRUE,
-               return = FALSE)
+fasta_fl <- truncate_file(
+  combined_telomere_file = telomeres_file,
+  results_data_frame = results_df,
+  out_dir = trunc_dir,
+  write_file = TRUE,
+  return = FALSE
+)
 
 # Map reads to reference
 combined_fasta <- file.path(trunc_dir, "truncated_reads.fa")
@@ -516,24 +589,30 @@ map_dir <- file.path(data_dir, "map")
 dir.create(map_dir, showWarnings = FALSE)
 
 # Map reads
-mapped_output <- map(fasta = combined_fasta, 
-                     results_data_frame = results_df,
-                     reference_file = ref_file, 
-                     preset_string = "map-ont",
-                     out_dir = map_dir, 
-                     return_mapped = TRUE,
-                     threads = 18)
+mapped_output <- map(
+  fasta = combined_fasta,
+  results_data_frame = results_df,
+  reference_file = ref_file,
+  preset_string = "map-ont",
+  out_dir = map_dir,
+  return_mapped = TRUE,
+  threads = 18
+)
 
 # Save mapped output
-saveRDS(mapped_output, file.path(results_dir, 
-                                 "mapped_output.rds"))
+saveRDS(mapped_output, file.path(
+  results_dir,
+  "mapped_output.rds"
+))
 ```
 
 # Plotting
 ```{r violin_plot, eval = TRUE, fig.width = 12, fig.height = 8}
 # Load data
-mapped_output <- readRDS(file.path(results_dir,
-                                   "mapped_output.rds"))
+mapped_output <- readRDS(file.path(
+  results_dir,
+  "mapped_output.rds"
+))
 mapped_output$results$sample <- sample_name
 
 # Create violin plot of mapped_output with top and bottom panels
@@ -546,12 +625,15 @@ loadfonts()
 hist <- ggplot(mapped_output[["results"]], aes(x = telomere_length)) +
   geom_histogram(binwidth = 100, aes(fill = chromEnd, y = after_stat(density)), alpha = 0.3) +
   geom_density(alpha = 0.6, aes(y = after_stat(density), fill = chromEnd)) +
-  geom_vline(aes(xintercept = mean(telomere_length, na.rm = TRUE)), 
-             color = "#ff0051", linetype = "dashed", linewidth = 1) +
-  labs(x = "Telomere Length", 
-       y = "Frequency", 
-       title = "Histogram of Telomere Lengths") +
-       theme(text = element_text(size = 22, family = "Arial"))
+  geom_vline(aes(xintercept = mean(telomere_length, na.rm = TRUE)),
+    color = "#ff0051", linetype = "dashed", linewidth = 1
+  ) +
+  labs(
+    x = "Telomere Length",
+    y = "Frequency",
+    title = "Histogram of Telomere Lengths"
+  ) +
+  theme(text = element_text(size = 22, family = "Arial"))
 
 
 left <- mapped_output[["results"]][mapped_output[["results"]]$chromEnd == "5'", ]
@@ -566,20 +648,24 @@ top <- ggplot(left, aes(x = ref_name, y = telomere_length / 1000, fill = chromEn
   geom_violin(drop = FALSE) +
   geom_boxplot(width = 0.1) +
   scale_fill_manual(values = c("#0091ff")) +
-  labs(x = "Chromosome", 
-    y = "Telomere Length (kb)", 
-    title = "Telomere Lengths by Chromosome End 5'") +
-    theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) +
-    theme(text = element_text(size = 18, family = "Arial"))
+  labs(
+    x = "Chromosome",
+    y = "Telomere Length (kb)",
+    title = "Telomere Lengths by Chromosome End 5'"
+  ) +
+  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
+  theme(text = element_text(size = 18, family = "Arial"))
 
 bottom <- ggplot(right, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
   geom_violin(drop = FALSE) +
   geom_boxplot(width = 0.1) +
   scale_fill_manual(values = c("#ff00b7")) +
-  labs(x = "Chromosome", 
-    y = "Telomere Length (kb)", 
-    title = "Telomere Lengths by Chromosome End 3'") +
-  theme(axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) +
+  labs(
+    x = "Chromosome",
+    y = "Telomere Length (kb)",
+    title = "Telomere Lengths by Chromosome End 3'"
+  ) +
+  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
   theme(text = element_text(size = 18, family = "Arial"))
 
 grid <- plot_grid(top, bottom, ncol = 1)
@@ -594,27 +680,33 @@ data <- mapped_output$results
 
 # kable(head(data, 15), "latex", booktabs = T) %>%
 #   kable_styling(latex_options = c("striped", "scale_down")) %>%
-#   as_image(width = 50, file = file.path(paths$example_results, 
+#   as_image(width = 50, file = file.path(paths$example_results,
 #                                         sample_name, "ouput_results.png"))
 
-# Save data as csv 
+# Save data as csv
 
 head(data)
 new <- data.frame(data[, c(1:13)])
-rand_telo <- round(rnorm(nrow(new), mean = mean(data$telomere_length, na.rm = TRUE), 
-                   sd = sd(data$telomere_length, na.rm = TRUE)))
+rand_telo <- round(rnorm(nrow(new),
+  mean = mean(data$telomere_length, na.rm = TRUE),
+  sd = sd(data$telomere_length, na.rm = TRUE)
+))
 new$telomere_length <- rand_telo
 new$sample <- "HG004_ONT_duplex"
 data <- rbind(data, new)
 new3 <- data.frame(data[, c(1:13)])
-rand_telo <- round(rnorm(nrow(new3), mean = 8000, 
-                   sd = sd(data$telomere_length, na.rm = TRUE)))
+rand_telo <- round(rnorm(nrow(new3),
+  mean = 8000,
+  sd = sd(data$telomere_length, na.rm = TRUE)
+))
 new3$telomere_length <- rand_telo
 new3$sample <- "HG003_ONT_duplex"
 data <- rbind(data, new3)
 
-write.csv(data, file = file.path(paths$example_results, 
-                                 sample_name, "output_results.csv"))
+write.csv(data, file = file.path(
+  paths$example_results,
+  sample_name, "output_results.csv"
+))
 ```
 
 # Session Info

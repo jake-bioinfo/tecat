@@ -2,7 +2,7 @@ Package: TECAT
 Version: 0.1.0
 Date: 2023-12-20
 Title: Calculating Chromosome End Specific Telomere Lengths
-Author: Jake Reed, Kevin R. Coombes, Pradyun Pulipaka
+Author: Jake Reed, Kevin R. Coombes, Mark Oelkuct
 Maintainer: Jake Reed <hreed.ga@gmail.com>
 Description: This application determines chromosome end specific 
 	telomere lengths using basic pattern matching with 3rd 
@@ -26,6 +26,7 @@ Imports:
     cowplot,
     zoo,
     mime,
+    minimapR,
     universalmotif
 Suggests:
     knitr,
@@ -34,7 +35,7 @@ Suggests:
     doSNOW,
     extrafont
 License: GNU Public Version 3
-URL: https://github.com/jake-bioinfo/tld_dev
+URL: https://github.com/jake-bioinfo/tecat
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2
 Encoding: UTF-8

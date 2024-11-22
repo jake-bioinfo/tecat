@@ -36,25 +36,25 @@ telo_search(
 \item{progress}{A logical of whether to show a progress bar.}
 }
 \value{
-A \code{list} of telomere sequences (if \code{return_telomere}: is TRUE), 
+A \code{list} of telomere sequences (if \code{return_telomere}: is TRUE),
 \code{data.table} of statistics, and a file \code{list}.
 }
 \description{
-\code{telo_search} takes as input a \code{list} of fastq files and 
-searches for telomere repeats in the sequences. It returns a 
+\code{telo_search} takes as input a \code{list} of fastq files and
+searches for telomere repeats in the sequences. It returns a
 list of sequences which contain telomere repeats (if \code{return_telomeres}: TRUE),
 a \code{data.table} of statistics for each file and a \code{list} of files.
 \code{return_telomeres} should only be TRUE when you have an exssesive amount of
 memory (RAM) to store the telomere sequences in the R session, roughly > 2 TB.
 }
 \details{
-The telo_search function efficiently searches for telomere repeats across 
-a list of FASTQ files using parallel processing. It leverages the telomere_matching 
-function to analyze each file for telomere motifs, collecting sequences and statistics 
-such as average read length and percentage of telomere bases. The function runs these 
-searches concurrently with pbmcapply::pbmclapply, handles multiple threads, and can 
-optionally show progress updates. After processing, it compiles a data.table of statistics 
-and, based on the return_telomeres parameter, returns either a list of telomere sequences, 
-statistics, and file paths, or just the statistics and file paths. The function also manages 
+The telo_search function efficiently searches for telomere repeats across
+a list of FASTQ files using parallel processing. It leverages the telomere_matching
+function to analyze each file for telomere motifs, collecting sequences and statistics
+such as average read length and percentage of telomere bases. The function runs these
+searches concurrently with pbmcapply::pbmclapply, handles multiple threads, and can
+optionally show progress updates. After processing, it compiles a data.table of statistics
+and, based on the return_telomeres parameter, returns either a list of telomere sequences,
+statistics, and file paths, or just the statistics and file paths. The function also manages
 verbosity and output directory options to control the search process and results.
 }

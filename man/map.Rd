@@ -13,7 +13,6 @@ map(
   prefix = "mapped",
   threads = 1,
   return_mapped = TRUE,
-  underscore = TRUE,
   verbose = TRUE
 )
 }
@@ -39,11 +38,11 @@ Default is 1.}
 \item{return_mapped}{A logical value specifying whether to return the mapped
 reads. Default is TRUE.}
 
-\item{underscore}{A logical value specifying whether to use underscores in
-the chromosome names. Default is TRUE.}
-
 \item{verbose}{A logical value specifying whether to display verbose messages.
 Default is TRUE.}
+
+\item{underscore}{A logical value specifying whether to use underscores in
+the chromosome names. Default is TRUE.}
 }
 \value{
 A list containing the mapped reads and the results data frame.

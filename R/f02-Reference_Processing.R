@@ -54,12 +54,12 @@ telomere_motif <- function(reference_file = NULL,
             is.character(platform),
             is.numeric(seed))
 
-  # Print data is a DNAStringSet
-  message("\nSuccessfully loaded DNAStringSet reference.\n")
-
   # Assign reference sequence after check
   data_ref <- Biostrings::readDNAStringSet(reference_file)
   ref.seq <- data_ref
+
+  # Print data is a DNAStringSet
+  message("\nSuccessfully loaded DNAStringSet reference.\n")
 
   # Check if reference data was loaded
   if (length(DNAStringSet(ref.seq)) == 0) {
