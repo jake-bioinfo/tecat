@@ -8,7 +8,6 @@ split_fastq(
   in_fastq,
   size = 284289,
   prefix = "split_",
-  compression_level = -1,
   threads = 1,
   out_dir = paste0(dirname(in_fastq), "/split"),
   extension = NULL
@@ -21,9 +20,6 @@ split_fastq(
 fastq file into smaller files.}
 
 \item{prefix}{character prefix for output files.}
-
-\item{compression_level}{numeric compression level for
-output files.}
 
 \item{threads}{numeric number of threads to use.}
 
@@ -42,12 +38,11 @@ segmentation faults
 \details{
 The 'split_fastq' function is designed to divide a large 
 FASTQ file into smaller files based on a specified size and includes 
-options for compression and multithreading. It constructs a 
+options for multithreading. It constructs a 
 command-line call to the 'seqkit split2' tool, which is a part of the 
 SeqKit toolkit for processing sequencing data. The function takes as 
 input the path to the FASTQ file to be split, the desired size 
-for each split file, a prefix for naming the split files, the level 
-of compression to apply (with -1 for default compression), the 
+for each split file, a prefix for naming the split files, the 
 number of threads to use for parallel processing, and the directory 
 where the split files will be saved. An optional file extension can 
 also be specified for the split files. The function constructs the 

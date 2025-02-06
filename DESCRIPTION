@@ -27,7 +27,11 @@ Imports:
     zoo,
     mime,
     minimapR,
-    universalmotif
+    universalmotif, 
+    memes, 
+    data.table, 
+    inflection, 
+    tidyverse
 Suggests:
     knitr,
     rmarkdown,

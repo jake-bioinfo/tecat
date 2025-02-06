@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 
 # 1. Installation
 This package depends on MEME and minimap2. MEME is a motif analysis tool which is used to determine the most common telomere motifs in a reference genome. Minimap2 is a read aligner which is used to align reads to the reference genome. Both of these tools are required for the package to run.
+
 ## Install MEME
 Download the software from https://meme-suite.org/doc/download.html
 Type the following commands: 
@@ -52,13 +53,13 @@ tar -vxzf sratoolkit.tar.gz
 export PATH=$PATH:$PWD/sratoolkit.3.0.0-mac64/bin
 
 # Download fastq file
-prefetch --progress --resume yes -X 500G ERR11028096
-fastq-dump ERR11028096
+prefetch --progress --resume yes -X 500G SRR28295757
+fastq-dump SRR28295757
 ```
 
 # 2. Showcase
 ## Load Libraries and Samples
-```{r setup}
+```{r libraries}
 # Load libraries
 library(Biostrings)
 library(TECAT)
@@ -66,13 +67,15 @@ library(ggplot2)
 library(cowplot)
 
 # Sample name
-sample_name <- "HG03065"
+sample_name <- "HG002"
 
-sample_file <- file.path(paste0("~/tmp/comparative_study_temp/", sample_name, ".fastq"))
-reference_file <- file.path("~/tmp/comparative_study_temp/ref/chm13v2.0.fa.gz")
+#extdata <- system.file("extdata", package = "TECAT")
+extdata <- file.path("/home/jake/software/tecat/inst/extdata")
+sample_file <- file.path(paste0(extdata, sample_name, "_part1.fastq.gz"))
+reference_file <- file.path(extdata, "chm13v2.0.fa.gz")
 data_dir <- tempdir()
-results_dir <- file.path("~/tmp/comparative_study_temp", sample_name, "results")
-dir.create(results_dir, showWarnings = FALSE)
+results_dir <- file.path(extdata, "tmp", sample_name, "results")
+dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Set options
 options(width = 300)
@@ -96,7 +99,7 @@ if (!file.exists(list.files(file.path(dirname(sample_file), "split"),
   stats_fl <- auto_split(
     in_fastq = sample_file,
     prefix = sample_name,
-    threads = 18,
+    threads = 7,
     out_dir = file.path(data_dir, "split"),
     target_ram_size_gb = 2
   )
@@ -119,7 +122,7 @@ motif_analysis <- telomere_motif(
   number_of_motifs = 10,
   number_of_repeats = 10,
   platform = "ONT",
-  threads = 18
+  threads = 7
 )
 
 print(paste("Number of motifs found: ", length(motif_analysis$motifs)))
@@ -153,7 +156,7 @@ dir.create(out, showWarnings = FALSE)
 search_res <- telo_search(
   fastq_files = file_list,
   grep_list = motif_analysis$grep_list,
-  threads = 14,
+  threads = 7,
   out_dir = out,
   return_telomeres = FALSE,
   verbose = FALSE,
@@ -177,31 +180,22 @@ gc()
 ## Cut telomere reads into sliding windows
 ## If you are running this vignette without the full data set, start here and run this opts_chunk
 ```{r load telomere file, eval = TRUE}
-
-
-```
-
-```{r telo_cut, eval = TRUE}
 telomere_stats <- readRDS(file.path(
-  results_dir,
+  extdata,
   "telomere_stats.rds"
 ))
 
-telo_file <- list.files(file.path(data_dir, "telo"),
-  pattern = "combined",
-  full.names = TRUE
-)
+telo_file <- file.path(extdata, "combined_telo.fa.gz")
+```
 
-# Source functions for cutting telomere reads into sliding windows
-source(file.path("R", "f04-Sliding_window.R"))
-
+```{r telo_cut, eval = TRUE}
 # Run sliding window on all telomere files
 windows <- sliding_window_parallel(
   telomere_file = telo_file,
   window_length = 200,
   step = 100,
   environment = "linux",
-  threads = 18,
+  threads = 7,
 )
 
 # Save windows
@@ -215,9 +209,6 @@ cat("\nFinished processing all telomere files to sliding windows.", "\n")
 
 ## Calculate frequency of telomere motifs in sliding windows
 ```{r telo_freq, eval = TRUE}
-# Source functions for calculating telomere motif frequencies
-source(file.path("R", "f05-Generate_telomere_frequencies.R"))
-
 # Load in data
 motif_analysis <- readRDS(file.path(
   results_dir,
@@ -249,7 +240,7 @@ freqs <- frequencies(
   motifs = motifs,
   environment = "linux",
   parallel = TRUE,
-  threads = 18,
+  threads = 7,
   save_files = TRUE,
   progress = TRUE,
   out_dir = out_dir,
@@ -273,6 +264,7 @@ rm(list = setdiff(ls(), c(
   "paths",
   "sample_name",
   "start_time"
+  "results_dir"
 )))
 gc()
 ```
@@ -287,13 +279,10 @@ telomere_frequencies <- readRDS(file.path(
   "freqs.rds"
 ))
 
-# Source functions for determining telomere length
-source(file.path("R", "f06-Telomere_length.R"))
-
 # Threshold determination
 thresh_df <- determine_threshold(
   telomere_list = telomere_frequencies,
-  threads = 18,
+  threads = 7,
   sample_ratio = 0.025
 )
 
@@ -368,11 +357,6 @@ print(paste0(
   "Mean of telomere lengths at 50-50 which were less than 2 kbp: ",
   mean(less_2k), "\n"
 ))
-# breaks <- ifelse(length(less_2k) < 10, 1, sqrt(length(less_2k)))
-# hist(less_2k, breaks = breaks,
-#      main = "Histogram of Telomere Lengths < 2kbp",
-#      xlab = "Telomere Length (bp)",
-#      ylab = "Frequency")
 
 minus_2k <- telomere_lengths[which(telomere_lengths > 2000)]
 print(paste0(
@@ -486,8 +470,6 @@ print(paste0("\nBest end threshold: ", best_end, "\n"))
 For now run all telomeres with start threshold of
 25 and end threshold of 25.
 ```{r check_lengths, eval = TRUE}
-source(file.path("R", "f06-Telomere_length.R"))
-
 # Load data
 telomere_frequencies <- readRDS(file.path(
   results_dir,
@@ -497,7 +479,7 @@ telomere_frequencies <- readRDS(file.path(
 # Run findtellength over all telomeres in parallel
 library(parallel)
 # Setup parallel environment
-cl <- parallel::makeCluster(18)
+cl <- parallel::makeCluster(7)
 parallel::clusterExport(cl, c("findTelLength"),
   envir = environment()
 )
@@ -519,11 +501,6 @@ saveRDS(results_df, file.path(
   results_dir,
   "results_df.rds"
 ))
-
-## This is very interesting
-# saveRDS(results_df, file.path(paths$example_results,
-#                               sample_name,
-#                               "results_df_interesting.rds"))
 
 # Look at average length in telomeres
 telomere_lengths <- results_df$telomere_length[which(!is.na(results_df$telomere_end) &
@@ -552,8 +529,6 @@ print(paste0("Total time: ", end_time - start_time))
 # Truncation and Mapping
 ## Truncate reads
 ```{r truncate, eval = FALSE}
-source(file.path("R", "fG-helper_functions.R"))
-source(file.path("R", "f07-Truncate_Map.R"))
 # Load data
 results_df <- readRDS(file.path(
   results_dir,
@@ -565,9 +540,7 @@ results_df <- results_df[!is.na(results_df$telomere_end), ]
 ls()
 find_sizes()
 
-telomeres_file <- list.files(file.path(data_dir, "telo"),
-  pattern = "combined", full.names = TRUE
-)
+telomere_file <- file.path(extdata, "combined_telo.fa.gz")
 ref_file <- reference_file
 
 # Truncate telomeres
@@ -576,7 +549,7 @@ dir.create(trunc_dir, showWarnings = FALSE)
 
 # Truncate files
 fasta_fl <- truncate_file(
-  combined_telomere_file = telomeres_file,
+  combined_telomere_file = telomere_file,
   results_data_frame = results_df,
   out_dir = trunc_dir,
   write_file = TRUE,
@@ -596,7 +569,7 @@ mapped_output <- map(
   preset_string = "map-ont",
   out_dir = map_dir,
   return_mapped = TRUE,
-  threads = 18
+  threads = 7
 )
 
 # Save mapped output
@@ -677,13 +650,6 @@ save_plot(file.path(paths$example_results, sample_name, "histogram.png"), hist, 
 ```{r empty}
 library(kableExtra)
 data <- mapped_output$results
-
-# kable(head(data, 15), "latex", booktabs = T) %>%
-#   kable_styling(latex_options = c("striped", "scale_down")) %>%
-#   as_image(width = 50, file = file.path(paths$example_results,
-#                                         sample_name, "ouput_results.png"))
-
-# Save data as csv
 
 head(data)
 new <- data.frame(data[, c(1:13)])

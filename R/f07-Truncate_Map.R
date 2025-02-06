@@ -133,7 +133,7 @@ truncate_file <- function(combined_telomere_file = NULL,
 #' @return A list containing the mapped reads and the results data frame.
 #' @importFrom dplyr distinct left_join
 #' @importFrom Biostrings readDNAStringSet width
-#' @import stringr
+#' @import stringr magrittr
 #' @export
 map <- function(fasta = NULL, 
                 results_data_frame = NULL, 

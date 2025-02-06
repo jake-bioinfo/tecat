@@ -8,7 +8,6 @@ auto_split(
   in_fastq,
   size = 284289,
   prefix = "split_",
-  compression_level = -1,
   threads = 1,
   out_dir = paste0(dirname(in_fastq), "/split"),
   extension = NULL,
@@ -23,9 +22,6 @@ smaller files.}
 
 \item{prefix}{character prefix for output files 
 (file label, default "split_").}
-
-\item{compression_level}{numeric compression level for
-output files.}
 
 \item{threads}{numeric number of threads to use.}
 
@@ -52,7 +48,7 @@ specified 'target_ram_size_gb'. It uses the 'fastq_stats' function to obtain sta
 on the total number of bases and reads in the input FASTQ file and estimates the 
 number of files required for the target RAM size. If more than one file is needed, 
 it calls the 'split_fastq' function to perform the actual splitting, applying the 
-specified 'size', 'prefix', 'compression_level', and 'threads' for the operation. The function 
+specified 'size', 'prefix', and 'threads' for the operation. The function 
 finally returns a list containing the file statistics and the paths to the created 
 split files.
 }
