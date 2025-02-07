@@ -1,1 +1,3 @@
-^inst/extdata
+^inst/extdata/tmp
+^cran-comments.md
+^TECAT.Rproj

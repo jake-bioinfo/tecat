@@ -72,7 +72,7 @@ sample_name <- "HG002"
 #extdata <- system.file("extdata", package = "TECAT")
 extdata <- file.path("/home/jake/software/tecat/inst/extdata")
 sample_file <- file.path(paste0(extdata, sample_name, "_part1.fastq.gz"))
-reference_file <- file.path(extdata, "chm13v2.0.fa.gz")
+reference_file <- file.path(extdata, "chr_ends.fa.gz")
 data_dir <- tempdir()
 results_dir <- file.path(extdata, "tmp", sample_name, "results")
 dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
@@ -80,6 +80,9 @@ dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 # Set options
 options(width = 300)
 options(meme_bin = "~/meme/bin")
+
+# Set start time for benchmarking
+start_time <- Sys.time()
 ```
 
 ## Process Fastq
@@ -211,7 +214,7 @@ cat("\nFinished processing all telomere files to sliding windows.", "\n")
 ```{r telo_freq, eval = TRUE}
 # Load in data
 motif_analysis <- readRDS(file.path(
-  results_dir,
+  extdata,
   "motif_analysis_results.rds"
 ))
 motifs <- as.character(motif_analysis$motifs)
@@ -263,15 +266,18 @@ rm(list = setdiff(ls(), c(
   "freqs",
   "paths",
   "sample_name",
-  "start_time"
-  "results_dir"
+  "start_time",
+  "results_dir", 
+  "extdata", 
+  "reference_file", 
+  "data_dir"
 )))
 gc()
 ```
 
 # Determine telomere length
-## !-- Somewhere I need to add telomere name designation in this 
-## analysis --!
+This data frame is produced from a subset of the data, and the following runs the method on all start and end threshold combinations. This allows 
+for the next step to determine the optimal thresholds to use for the rest of the data.
 ```{r telomere_length, eval = TRUE}
 # Load data
 telomere_frequencies <- readRDS(file.path(
@@ -293,96 +299,9 @@ saveRDS(thresh_df, file.path(
 ))
 ```
 
-# Explore data
-## Inspect threshold data
-Need to look into why telomere lengths aren't being calculated for some reads.
-```{r inspect_threshold_data, eval = TRUE}
-# Load data
-telomere_frequencies <- readRDS(file.path(
-  results_dir,
-  "freqs.rds"
-))
-thresh_df <- readRDS(file.path(
-  results_dir,
-  "threshold_data.rds"
-))
-
-# Number of submitted telomeres
-print(paste0(
-  "Number of submitted telomeres: ", length(telomere_frequencies),
-  "\n"
-))
-
-# Debugging
-na_indices <- which(is.na(thresh_df$start[[50]]$telomere_end))
-misfits <- telomere_frequencies[na_indices]
-# Test all indices are NA
-print(paste0(
-  "Number of NA (misassigned) telomeres: ", length(misfits),
-  "\n"
-))
-
-# Fraction misassigned at best threshold
-print(paste0(
-  "Fraction misassigned at 50-50 threshold: ",
-  length(misfits) / length(telomere_frequencies), "\n"
-))
-
-# Look into first read problem
-ref_lens <- thresh_df$start[[50]]
-head(ref_lens, 50)
-
-# Look at average length in telomeres
-telomere_lengths <- ref_lens$telomere_length[!is.na(ref_lens$telomere_end)]
-print(paste0(
-  "Mean telomere length at 50-50 without NA: ", mean(telomere_lengths),
-  "\n"
-))
-
-# Create histogrma of telomere lengths
-hist(telomere_lengths,
-  breaks = sqrt(length(telomere_lengths)),
-  main = "Histogram of Telomere Lengths",
-  xlab = "Telomere Length (bp)",
-  ylab = "Frequency"
-)
-
-# Less than 2k length
-ind_2k <- which(telomere_lengths < 2000 &
-  !is.na(telomere_lengths) &
-  telomere_lengths > 0)
-print(paste0("Number of telomeres less than 2kbp: ", length(ind_2k), "\n"))
-less_2k <- telomere_lengths[ind_2k]
-print(paste0(
-  "Mean of telomere lengths at 50-50 which were less than 2 kbp: ",
-  mean(less_2k), "\n"
-))
-
-minus_2k <- telomere_lengths[which(telomere_lengths > 2000)]
-print(paste0(
-  "Mean of telomere lengths at 50-50 which were greater than 2 kbp: ",
-  mean(minus_2k), "\n"
-))
-hist(minus_2k,
-  breaks = sqrt(length(minus_2k)),
-  main = "Histogram of Telomere Lengths > 2kbp",
-  xlab = "Telomere Length (bp)",
-  ylab = "Frequency"
-)
-```
-
-# Find optimal thresholds
-```{r find_optimal_thresholds, eval = TRUE}
-thresholds <- optimal_thresholds(threshold_dataframe = thresh_df)
-thresholds
-```
-
-## Delve into threshold data, format
-This section is going to be focused on constructing a dataset which 
-can be looked at more closely. Basically we need a dataset based on 
-starting threshold which shows sensitivity while the ending threshold
-shows telomere length.
-```{r formatting, eval =  FALSE}
+## Reformat Threshold Data
+This section reformats the threshold data in order to facilitate visualization of the data in the next step.
+```{r formatting, eval =  TRUE}
 # Start sensitivity
 start_number_of_telos <- unlist(lapply(thresh_df$start, function(x) {
   length(which(!is.na(x$telomere_end)))
@@ -429,7 +348,21 @@ print(paste0("\n..."))
 knitr::kable(tail(telomere_length_df))
 ```
 
-## Plot threshold data
+# Find optimal thresholds
+The method determines telomere boundaries using two threshold values for telomere frequency motifs in 200 bp rolling windows. 
+The start threshold sets the minimum motif frequency required in the first window to identify a telomeric region, affecting the 
+method's sensitivity. The end threshold defines the minimum motif frequency that determines where the telomeric region ends - when 
+a window falls below this threshold, that position marks the telomere length for that read. An optimal start threshold balances sensitivity, 
+while the end threshold ensures accurate telomere length determination. The method's performance hinges on these thresholds, as they directly
+influence the identification and measurement of telomeric regions in the sequencing data.
+```{r find_optimal_thresholds, eval = TRUE}
+thresholds <- optimal_thresholds(threshold_dataframe = thresh_df)
+thresholds
+```
+
+## Visualize Threshold data
+We visualize how different start and stop threshold combinations affect both the number of identified telomeres and their average length to 
+evaluate the telomere length determination method.
 ```{r plot_threshold_data, eval = TRUE}
 library(ggplot2)
 library(cowplot)
@@ -467,8 +400,7 @@ print(paste0("\nBest end threshold: ", best_end, "\n"))
 ```
 
 ## Determine optimal thresholds
-For now run all telomeres with start threshold of
-25 and end threshold of 25.
+We use the optimal thresholds found in the previous step and apply them to the entire dataset in order to determine telomere lengths.
 ```{r check_lengths, eval = TRUE}
 # Load data
 telomere_frequencies <- readRDS(file.path(
@@ -521,14 +453,11 @@ hist(telomere_lengths,
   xlab = "Telomere Length (bp)",
   ylab = "Frequency"
 )
-
-end_time <- Sys.time()
-print(paste0("Total time: ", end_time - start_time))
 ```
 
 # Truncation and Mapping
-## Truncate reads
-```{r truncate, eval = FALSE}
+After identifying the telomeric region, the method trims the read at this boundary and maps the remaining sequence to the reference genome.
+```{r truncate, eval = TRUE}
 # Load data
 results_df <- readRDS(file.path(
   results_dir,
@@ -577,6 +506,10 @@ saveRDS(mapped_output, file.path(
   results_dir,
   "mapped_output.rds"
 ))
+
+# End time for benchmarking
+end_time <- Sys.time()
+print(paste0("Total time: ", end_time - start_time))
 ```
 
 # Plotting
@@ -643,10 +576,12 @@ bottom <- ggplot(right, aes(x = ref_name, y = telomere_length / 1000, fill = chr
 
 grid <- plot_grid(top, bottom, ncol = 1)
 grid
-save_plot(file.path(paths$example_results, sample_name, "violin_plot.png"), grid, base_width = 12, base_height = 6)
-save_plot(file.path(paths$example_results, sample_name, "histogram.png"), hist, base_width = 12, base_height = 6)
+save_plot(file.path(results_dir, "violin_plot.png"), grid, base_width = 12, base_height = 6)
+save_plot(file.path(results_dir, "histogram.png"), hist, base_width = 12, base_height = 6)
 ```
 
+# Exporting Results
+Produce CSV table of results.
 ```{r empty}
 library(kableExtra)
 data <- mapped_output$results
@@ -657,21 +592,11 @@ rand_telo <- round(rnorm(nrow(new),
   mean = mean(data$telomere_length, na.rm = TRUE),
   sd = sd(data$telomere_length, na.rm = TRUE)
 ))
-new$telomere_length <- rand_telo
-new$sample <- "HG004_ONT_duplex"
-data <- rbind(data, new)
-new3 <- data.frame(data[, c(1:13)])
-rand_telo <- round(rnorm(nrow(new3),
-  mean = 8000,
-  sd = sd(data$telomere_length, na.rm = TRUE)
-))
-new3$telomere_length <- rand_telo
-new3$sample <- "HG003_ONT_duplex"
-data <- rbind(data, new3)
 
+# Save csv file
 write.csv(data, file = file.path(
-  paths$example_results,
-  sample_name, "output_results.csv"
+  results_dir,
+  "output_results.csv"
 ))
 ```
 

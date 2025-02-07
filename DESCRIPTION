@@ -31,7 +31,8 @@ Imports:
     memes, 
     data.table, 
     inflection, 
-    tidyverse
+    tidyverse, 
+    kableExtra
 Suggests:
     knitr,
     rmarkdown,
