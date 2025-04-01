@@ -1,6 +1,6 @@
 Package: TECAT
 Version: 0.1.0
-Date: 2023-12-20
+Date: 2025-03-30
 Title: Calculating Chromosome End Specific Telomere Lengths
 Author: Jake Reed, Kevin R. Coombes, Mark Oelkuct
 Maintainer: Jake Reed <hreed.ga@gmail.com>
@@ -13,7 +13,8 @@ Description: This application determines chromosome end specific
 	contain	telomeric repeats. Telomere length determination 
 	then creates interactive visualizations to aid the analysis 
 	of sequenced samples. 
-Depends: R (>= 3.5)
+    * Note: seqkit is required for some functions in TECAT.
+Depends: R (>= 4.4.0)
 biocViews:
 Imports:
     Biostrings (>= 2.60.0),
@@ -32,14 +33,19 @@ Imports:
     data.table, 
     inflection, 
     tidyverse, 
-    kableExtra
+    kableExtra,
+    IRanges,
+    doSNOW,
+    extrafont,
+    foreach,
+    magrittr,
+    stringi
 Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    doSNOW,
     extrafont
-License: GNU Public Version 3
+License: file LICENSE
 URL: https://github.com/jake-bioinfo/tecat
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2

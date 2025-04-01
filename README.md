@@ -60,8 +60,8 @@ An in-depth vignette is included
 `vignettes/ONT_example_vignette.Rmd`
 
 
-
-
 ## License
 
-GPL-3.0 License - see LICENSE file for details
+This package is licensed under the [Prosperity Public License](https://prosperitylicense.com/versions/3.0.0), which allows free use by individuals and non-commercial organizations, but requires commercial users to purchase a license.
+
+If you are using this package for commercial purposes, please contact [your email] to obtain a commercial license.

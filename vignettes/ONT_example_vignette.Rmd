@@ -70,19 +70,19 @@ library(cowplot)
 sample_name <- "HG002"
 
 #extdata <- system.file("extdata", package = "TECAT")
-extdata <- file.path("/home/jake/software/tecat/inst/extdata")
+extdata <- file.path("~/cran/tecat/inst/extdata/")
 sample_file <- file.path(paste0(extdata, sample_name, "_part1.fastq.gz"))
 reference_file <- file.path(extdata, "chr_ends.fa.gz")
 data_dir <- tempdir()
-results_dir <- file.path(extdata, "tmp", sample_name, "results")
+results_dir <- file.path("~/tmp", sample_name, "results")
 dir.create(results_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Set options
 options(width = 300)
 options(meme_bin = "~/meme/bin")
 
-# Set start time for benchmarking
-start_time <- Sys.time()
+# Set number of threads
+threads <- 2
 ```
 
 ## Process Fastq
@@ -102,7 +102,7 @@ if (!file.exists(list.files(file.path(dirname(sample_file), "split"),
   stats_fl <- auto_split(
     in_fastq = sample_file,
     prefix = sample_name,
-    threads = 7,
+    threads = threads,
     out_dir = file.path(data_dir, "split"),
     target_ram_size_gb = 2
   )
@@ -125,7 +125,7 @@ motif_analysis <- telomere_motif(
   number_of_motifs = 10,
   number_of_repeats = 10,
   platform = "ONT",
-  threads = 7
+  threads = threads
 )
 
 print(paste("Number of motifs found: ", length(motif_analysis$motifs)))
@@ -159,7 +159,7 @@ dir.create(out, showWarnings = FALSE)
 search_res <- telo_search(
   fastq_files = file_list,
   grep_list = motif_analysis$grep_list,
-  threads = 7,
+  threads = threads,
   out_dir = out,
   return_telomeres = FALSE,
   verbose = FALSE,
@@ -198,7 +198,7 @@ windows <- sliding_window_parallel(
   window_length = 200,
   step = 100,
   environment = "linux",
-  threads = 7,
+  threads = threads
 )
 
 # Save windows
@@ -243,7 +243,7 @@ freqs <- frequencies(
   motifs = motifs,
   environment = "linux",
   parallel = TRUE,
-  threads = 7,
+  threads = threads,
   save_files = TRUE,
   progress = TRUE,
   out_dir = out_dir,
@@ -266,11 +266,11 @@ rm(list = setdiff(ls(), c(
   "freqs",
   "paths",
   "sample_name",
-  "start_time",
   "results_dir", 
   "extdata", 
   "reference_file", 
-  "data_dir"
+  "data_dir", 
+  "threads"
 )))
 gc()
 ```
@@ -288,7 +288,7 @@ telomere_frequencies <- readRDS(file.path(
 # Threshold determination
 thresh_df <- determine_threshold(
   telomere_list = telomere_frequencies,
-  threads = 7,
+  threads = threads,
   sample_ratio = 0.025
 )
 
@@ -411,7 +411,7 @@ telomere_frequencies <- readRDS(file.path(
 # Run findtellength over all telomeres in parallel
 library(parallel)
 # Setup parallel environment
-cl <- parallel::makeCluster(7)
+cl <- parallel::makeCluster(threads)
 parallel::clusterExport(cl, c("findTelLength"),
   envir = environment()
 )
@@ -448,7 +448,7 @@ print(paste0("Mean telomere length at 20-15 without NA: ", mean(wo_na$telomere_l
 
 # Create histogrma of telomere lengths
 hist(telomere_lengths,
-  breaks = sqrt(length(telomere_lengths)),
+  breaks = 10,
   main = "Histogram of Telomere Lengths",
   xlab = "Telomere Length (bp)",
   ylab = "Frequency"
@@ -498,7 +498,7 @@ mapped_output <- map(
   preset_string = "map-ont",
   out_dir = map_dir,
   return_mapped = TRUE,
-  threads = 7
+  threads = threads
 )
 
 # Save mapped output
@@ -506,10 +506,6 @@ saveRDS(mapped_output, file.path(
   results_dir,
   "mapped_output.rds"
 ))
-
-# End time for benchmarking
-end_time <- Sys.time()
-print(paste0("Total time: ", end_time - start_time))
 ```
 
 # Plotting
