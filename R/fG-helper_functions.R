@@ -21,7 +21,6 @@
 ## This creates a mime map for other functions etc to use
 # Define a mapping of file extensions to corresponding MIME types
 library(mime)
-library(dplyr)
 mimemap[["rds"]] <- "application/x-rds"
 mimemap[["fastq"]] <- "application/fastq"
 mimemap[["fq"]] <- "application/fastq"
@@ -37,15 +36,20 @@ mimemap[["fa.gz"]] <- "application/fasta-gz"
 #' @description Get the MIME type of a file based on its extension.
 #' @param file_path A character string specifying the path to the file.
 #' @return A character string specifying the MIME type of the file.
+#' @importFrom tools file_ext
+#' @import mime
 #' @export
 get_mime_type <- function(file_path) {
     # Correction for biologic data types
     if((grepl("\\.f", file_path) & grepl("gz", file_path))) {
         file_path <- tools::file_path_sans_ext(file_path)
     }
-    tools::file_ext(file_path) %>% 
-        tolower() %>%
-        mimemap[.]
+
+    # Process the file path to get the extension
+    file_ext <- tools::file_ext(file_path)
+    lower_ext <- base::tolower(file_ext)
+    mime_type <- mimemap[lower_ext]
+    return(mime_type)
 }
 
 mime_read_map <- list(
@@ -165,7 +169,7 @@ find_sizes <- function(clean = FALSE,
 
     # Iterate through each object and get its size
     sizes <- lapply(loaded_objects, function(x) {
-        object.size(get(x, envir = environ)) / 1024^2
+        utils::object.size(get(x, envir = environ)) / 1024^2
     })
 
     # Combine object names and their sizes into a data frame
@@ -302,4 +306,13 @@ combine_fasta <- function(list_of_fasta = NULL,
   # Return
   return(file.path = fp)
   if(return_reads) return(list(combined_reads = fasta), file.path = fp)
+}
+
+#' @importFrom methods getFunction
+myStringViewsToStringSet <- function(...) {
+  # Get the function from the Biostrings namespace
+  biostrings_fun <- getFunction("fromXStringViewsToStringSet", 
+                                where = asNamespace("Biostrings"))
+  # Call it with the provided arguments
+  biostrings_fun(...)
 }

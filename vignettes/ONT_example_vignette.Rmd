@@ -61,7 +61,6 @@ fastq-dump SRR28295757
 ## Load Libraries and Samples
 ```{r libraries}
 # Load libraries
-library(Biostrings)
 library(TECAT)
 library(ggplot2)
 library(cowplot)
@@ -69,9 +68,18 @@ library(cowplot)
 # Sample name
 sample_name <- "HG002"
 
-#extdata <- system.file("extdata", package = "TECAT")
-extdata <- file.path("~/cran/tecat/inst/extdata/")
-sample_file <- file.path(paste0(extdata, sample_name, "_part1.fastq.gz"))
+# Load the TECAT package data
+extdata <- system.file("extdata", package = "TECAT")
+if(extdata == "") {
+  # Fallback for when package isn't installed (during development/build)
+  if(file.exists("~/cran/tecat/inst/extdata")) {
+    extdata <- "~/cran/tecat/inst/extdata"
+  } else {
+    stop("Cannot find package extdata directory")
+  }
+}
+
+sample_file <- file.path("~/tmp", sample_name, "fastq/SRR28295757.fastq")
 reference_file <- file.path(extdata, "chr_ends.fa.gz")
 data_dir <- tempdir()
 results_dir <- file.path("~/tmp", sample_name, "results")
@@ -318,7 +326,7 @@ telomere_lengths_end <- lapply(thresh_df$end, function(x) {
   vals <- x$telomere_length[!is.na(x$telomere_end)]
   x <- mean(vals)
   if (x != 0 & length(vals) > 1) {
-    std_dev <- sd(vals)
+    std_dev <- stats::sd(vals)
   } else {
     std_dev <- 0
   }
@@ -364,9 +372,6 @@ thresholds
 We visualize how different start and stop threshold combinations affect both the number of identified telomeres and their average length to 
 evaluate the telomere length determination method.
 ```{r plot_threshold_data, eval = TRUE}
-library(ggplot2)
-library(cowplot)
-
 # Plot sensitivity and telomere line graphs next to each other
 sens_plot <- ggplot(sensitivity_df, aes(x = start, y = number_of_telos)) +
   geom_line() +
@@ -448,7 +453,7 @@ print(paste0("Mean telomere length at 20-15 without NA: ", mean(wo_na$telomere_l
 
 # Create histogrma of telomere lengths
 hist(telomere_lengths,
-  breaks = 10,
+  breaks = round(sqrt(length(telomere_lengths))),
   main = "Histogram of Telomere Lengths",
   xlab = "Telomere Length (bp)",
   ylab = "Frequency"
@@ -518,8 +523,6 @@ mapped_output <- readRDS(file.path(
 mapped_output$results$sample <- sample_name
 
 # Create violin plot of mapped_output with top and bottom panels
-library(ggplot2)
-library(cowplot)
 library(extrafont)
 loadfonts()
 
@@ -579,14 +582,13 @@ save_plot(file.path(results_dir, "histogram.png"), hist, base_width = 12, base_h
 # Exporting Results
 Produce CSV table of results.
 ```{r empty}
-library(kableExtra)
 data <- mapped_output$results
 
 head(data)
 new <- data.frame(data[, c(1:13)])
 rand_telo <- round(rnorm(nrow(new),
   mean = mean(data$telomere_length, na.rm = TRUE),
-  sd = sd(data$telomere_length, na.rm = TRUE)
+  sd = stats::sd(data$telomere_length, na.rm = TRUE)
 ))
 
 # Save csv file

@@ -1,6 +1,6 @@
 ## Create sliding window of reads
 # Sliding window function
-# !-- Depends on foreach, IRanges, doSNOW, parallel --!
+# !-- Depends on foreach, IRanges, parallel --!
 # !-- fixed Frequencies, this needs the same treatment, as well as pattern searching -
 #' @title Sliding Window Telomere Sequence Processing
 #' @description The 'sliding_window' function generates overlapping windows
@@ -83,7 +83,7 @@ sliding_window <- function(telomere_sequence,
 #' @returns A list of IRanges::Views objects, each containing overlapping windows
 #' of the original telomere sequences.
 #' @importFrom Biostrings readDNAStringSet
-#' @import parallel pbmcapply doSNOW foreach
+#' @import parallel pbmcapply foreach doParallel
 #' @export
 sliding_window_parallel <- function(telomere_file,
                                     window_length = 200,
@@ -123,13 +123,11 @@ sliding_window_parallel <- function(telomere_file,
               in ", environment, ".")
     }
     # Running in parallel in windows
-    library(doSNOW)
-    library(foreach)
     cl <- makeCluster(threads)
-    registerDoSNOW(cl)
+    doParallel::registerDoParallel(cl)
 
     # Run parallel
-    ret <- foreach(
+    ret <- foreach::foreach(
       x = X,
       .combine = "c",
       .export = "sliding_window"

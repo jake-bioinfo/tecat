@@ -28,6 +28,7 @@ telomere_matching <- function(fastq_file,
                               grep_list = c("TTAGGG", "CCCTAA"),
                               return_telomeres = FALSE,
                               verbose = FALSE) {
+
     if (verbose) {
         message("Processing: ", fastq_file, "\n")
     }
@@ -176,6 +177,7 @@ telo_search <- function(fastq_files = NULL,
                         return_telomeres = FALSE,
                         verbose = FALSE,
                         progress = FALSE) {
+
     # Status message
     message(
         "Searching for telomeres in ", length(fastq_files), " files\n",

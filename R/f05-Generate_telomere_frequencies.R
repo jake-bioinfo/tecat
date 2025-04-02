@@ -33,9 +33,12 @@ generate_telomere_frequencies <- function(telomere_windows,
         seq_length <- Biostrings::nchar(telomere_windows[bpwin])
         end <- start + seq_length - 1
         window_length <- end - start + 1
-        subject <- Biostrings:::fromXStringViewsToStringSet(
+        subject <- myStringViewsToStringSet(
             telomere_windows[bpwin], 
-            out.of.limits = "ok")
+            out.of.limits = "ok") # Use this to ensure it works with XStringViews
+        # subject <- Biostrings:::fromXStringViewsToStringSet(
+        #     telomere_windows[bpwin], 
+        #     out.of.limits = "ok")
                 
         out <- try({
             sapply(motifs, function(mot) {
@@ -45,9 +48,12 @@ generate_telomere_frequencies <- function(telomere_windows,
         })}, silent = TRUE)
 
         if (inherits(out, "try-error")) {
-            subject <- Biostrings:::fromXStringViewsToStringSet(
+            subject <- myStringViewsToStringSet(
                 telomere_windows[bpwin], 
-                out.of.limits = "ok")[[1]]
+                out.of.limits = "ok")[[1]] # Fallback to ensure it works with XStringViews
+            # subject <- Biostrings:::fromXStringViewsToStringSet(
+            #     telomere_windows[bpwin], 
+            #     out.of.limits = "ok")[[1]]
                 
             out <- sapply(motifs, function(mot) {
                 Biostrings::countPattern(mot, 

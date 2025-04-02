@@ -170,7 +170,7 @@ map <- function(fasta = NULL,
 
   # Mapped reads, dplyr deduplication based on qname
   mapped_reads <- mapped_reads %>% 
-    dplyr::distinct(qname, .keep_all = TRUE)
+    dplyr::distinct("qname", .keep_all = TRUE)
 
   # Add telo_name to mapped reads
   results_data_frame$telo_name <- rownames(results_data_frame)
@@ -327,7 +327,7 @@ tecat_plot <- function(mapped_output = NULL,
     theme(text = element_text(size = 18)) +
     theme(legend.position = "none")
 
-  grid <- plot_grid(top, bottom, ncol = 1)
+  grid <- cowplot::plot_grid(top, bottom, ncol = 1)
 
   if (save_plots) {
     # Save plots

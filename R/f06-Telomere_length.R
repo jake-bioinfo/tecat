@@ -251,7 +251,7 @@ optimal_thresholds <- function(threshold_dataframe) {
         vals <- x$telomere_length[!is.na(x$telomere_end)]
         x <- mean(vals)
         if (x != 0 & length(vals) > 1) {
-            std_dev <- sd(vals)
+            std_dev <- stats::sd(vals)
         } else {
             std_dev <- 0
         }
@@ -321,7 +321,7 @@ plot_thresholds <- function(threshold_dataframe = NULL,
         vals <- x$telomere_length[!is.na(x$telomere_end)]
         x <- mean(vals)
         if (x != 0 & length(vals) > 1) {
-            std_dev <- sd(vals)
+            std_dev <- stats::sd(vals)
         } else {
             std_dev <- 0
         }
@@ -337,9 +337,6 @@ plot_thresholds <- function(threshold_dataframe = NULL,
         end = seq(1, 100, 1),
         end_df
     )
-
-    # Plot the thresholds data
-    library(cowplot)
 
     # Plot sensitivity and telomere line graphs next to each other
     sens_plot <- ggplot(sensitivity_df, aes(x = start, y = number_of_telos)) +
@@ -364,5 +361,5 @@ plot_thresholds <- function(threshold_dataframe = NULL,
         ) +
         theme_bw()
 
-    return(plot_grid(sens_plot, telomere_plot, ncol = 2))
+    return(cowplot::plot_grid(sens_plot, telomere_plot, ncol = 2))
 }

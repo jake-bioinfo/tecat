@@ -119,7 +119,7 @@ get_mean_sd <- function(input.df = result.df) {
     rts <- rts %>% mutate(mean.l = case_when(sample== sample_types ~ samp_mean, T ~ mean.l))
   }
   for (sample_types in unique(input.df$sample)) {
-    samp_sd <- sd(filter(input.df, sample == sample_types)$telomere_length)
+    samp_sd <- stats::sd(filter(input.df, sample == sample_types)$telomere_length)
     rts <- rts %>% mutate(sd.l = case_when(sample == sample_types ~ samp_sd, T ~ sd.l))
   }
   return(rts)
