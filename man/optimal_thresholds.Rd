@@ -2,7 +2,7 @@
 % Please edit documentation in R/f06-Telomere_length.R
 \name{optimal_thresholds}
 \alias{optimal_thresholds}
-\title{determine_optimal_thresholds}
+\title{Determine optimal thresholds}
 \usage{
 optimal_thresholds(threshold_dataframe)
 }

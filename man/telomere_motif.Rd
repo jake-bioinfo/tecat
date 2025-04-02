@@ -16,6 +16,8 @@ telomere_motif(
 )
 }
 \arguments{
+\item{reference_file}{DNAStringSet reference data.}
+
 \item{reference_telo_length}{numeric predicted length of telomeres
 present in the reference file.}
 
@@ -30,8 +32,6 @@ present in the reference file.}
 \item{platform}{character sequencing platform used (PB | ONT).}
 
 \item{seed}{numeric seed for random number generation.}
-
-\item{data_ref}{DNAStringSet reference data.}
 }
 \value{
 list object which contains the list elements grep_list and

@@ -8,8 +8,8 @@ frequencies(
   windows,
   motifs,
   environment = "linux",
-  parallel = FALSE,
-  threads = 0,
+  parallel = TRUE,
+  threads = 4,
   save_files = TRUE,
   out_dir = file.path(getwd(), "telomere_frequencies"),
   progress = FALSE,
@@ -17,9 +17,30 @@ frequencies(
 )
 }
 \arguments{
+\item{windows}{A list of telomere windows, each containing an XStringViews object.}
+
 \item{motifs}{A character vector of telomere motifs to search for.}
 
-\item{telomere_windows}{An XStringViews object containing telomere windows.}
+\item{environment}{A character string specifying the environment in which to
+run the function. Default is 'linux'.}
+
+\item{parallel}{A logical specifying whether to run the function in parallel.
+Default is TRUE.}
+
+\item{threads}{An integer specifying the number of threads to use for parallel
+processing. Default is 4.}
+
+\item{save_files}{A logical specifying whether to save the results to a file.
+Default is TRUE.}
+
+\item{out_dir}{A character string specifying the output directory for saving
+the results. Default is the current working directory.}
+
+\item{progress}{A logical specifying whether to show a progress bar. Default is
+FALSE.}
+
+\item{verbose}{A logical specifying whether to print messages. Default is
+FALSE.}
 }
 \value{
 A data frame containing the start, end, window length, telomere

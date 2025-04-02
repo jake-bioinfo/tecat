@@ -222,7 +222,7 @@ determine_threshold <- function(telomere_list = NULL,
 
 # This function is used to determine the optimal thresholds for the
 # telomere length calculation.
-#' @title determine_optimal_thresholds
+#' @title Determine optimal thresholds
 #' @description Determine the optimal thresholds for the telomere length
 #' calculation.
 #' @param threshold_dataframe A data frame containing the start and end
@@ -292,6 +292,7 @@ optimal_thresholds <- function(threshold_dataframe) {
 #' @return A ggplot object containing the plot of the thresholds data.
 #' @export
 #' @import ggplot2 cowplot
+#' @importFrom rlang .data
 plot_thresholds <- function(threshold_dataframe = NULL,
                             optimal_thresholds = NULL) {
     # Check that threshold_dataframe is not NULL
@@ -339,7 +340,7 @@ plot_thresholds <- function(threshold_dataframe = NULL,
     )
 
     # Plot sensitivity and telomere line graphs next to each other
-    sens_plot <- ggplot(sensitivity_df, aes(x = start, y = number_of_telos)) +
+    sens_plot <- ggplot(sensitivity_df, aes(x = .data$start, y = .data$number_of_telos)) +
         geom_line() +
         geom_point() +
         geom_vline(xintercept = optimal_thresholds$sensitivity, color = "red") +
@@ -350,7 +351,7 @@ plot_thresholds <- function(threshold_dataframe = NULL,
         ) +
         theme_bw()
 
-    telomere_plot <- ggplot(telomere_length_df, aes(x = end, y = mean)) +
+    telomere_plot <- ggplot(telomere_length_df, aes(x = .data$end, y = .data$mean)) +
         geom_line() +
         geom_point() +
         geom_vline(xintercept = optimal_thresholds$telomere_length, color = "red") +

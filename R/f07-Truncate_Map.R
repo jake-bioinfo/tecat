@@ -35,8 +35,6 @@ truncation <- function(reads, result_df) {
 #' @param prefix A character string specifying the prefix for the output files.
 #' @param write_file A logical value specifying whether to write the output
 #' files to disk. Default is TRUE.
-#' @param progress A logical value specifying whether to display progress
-#' messages. Default is TRUE.
 #' @param return A logical value specifying whether to return the truncated
 #' reads. Default is FALSE.
 #' @param verbose A logical value specifying whether to display verbose
@@ -126,12 +124,10 @@ truncate_file <- function(combined_telomere_file = NULL,
 #' Default is 1.
 #' @param return_mapped A logical value specifying whether to return the mapped
 #' reads. Default is TRUE.
-#' @param underscore A logical value specifying whether to use underscores in
-#' the chromosome names. Default is TRUE.
 #' @param verbose A logical value specifying whether to display verbose messages.
 #' Default is TRUE.
 #' @return A list containing the mapped reads and the results data frame.
-#' @importFrom dplyr distinct left_join
+#' @importFrom dplyr distinct left_join .data
 #' @importFrom Biostrings readDNAStringSet width
 #' @import stringr magrittr
 #' @export
@@ -168,9 +164,11 @@ map <- function(fasta = NULL,
                                      verbose = verbose, 
                                      ... = paste0("--secondary=no"))
 
-  # Mapped reads, dplyr deduplication based on qname
-  mapped_reads <- mapped_reads %>% 
-    dplyr::distinct("qname", .keep_all = TRUE)
+  # Get duplicate information
+  mapped_reads$is_duplicate <- duplicated(mapped_reads$qname)
+
+  # Keep only first occurrence of each qname
+  mapped_reads <- mapped_reads[!mapped_reads$is_duplicate, ]
 
   # Add telo_name to mapped reads
   results_data_frame$telo_name <- rownames(results_data_frame)
@@ -252,15 +250,18 @@ map <- function(fasta = NULL,
 ## tecat map  
 #' @title Plotted mapped reads
 #' @description Plot mapped reads.
-#' @param mapped_results A list containing the mapped reads and the results data frame.
+#' @param mapped_output A list containing the mapped reads and the results data frame.
 #' @param out_dir A character string specifying the output directory.
 #' @param prefix A character string specifying the prefix for the output files.
-#' @param verbose A logical value specifying whether to display verbose messages.
 #' @param return A logical value specifying whether to return the plotted reads.
 #' Default is FALSE.
 #' @param save_plots A logical value specifying whether to save the plot to disk.
 #' @return A list containing the histogram and violin plot.
 #' @import ggplot2 cowplot extrafont
+#' @importFrom rlang .data
+#' @importFrom cowplot save_plot
+#' @importFrom dplyr distinct
+#' @importFrom stats density
 #' @export
 tecat_plot <- function(mapped_output = NULL, 
                        out_dir = file.path(getwd(), "mapped_reads"),
@@ -277,10 +278,10 @@ tecat_plot <- function(mapped_output = NULL,
   dir.create(out_dir, showWarnings = FALSE)
 
   # Plot
-  hist <- ggplot(mapped_output[["results"]], aes(x = telomere_length)) +
-    geom_histogram(binwidth = 100, aes(fill = chromEnd, y = after_stat(density)), alpha = 0.3) +
-    geom_density(alpha = 0.6, aes(y = after_stat(density), fill = chromEnd)) +
-    geom_vline(aes(xintercept = mean(telomere_length, na.rm = TRUE)),
+  hist <- ggplot(mapped_output[["results"]], aes(x = .data$telomere_length)) +
+    geom_histogram(binwidth = 100, aes(fill = .data$chromEnd, y = after_stat(.data$density)), alpha = 0.3) +
+    geom_density(alpha = 0.6, aes(y = after_stat(.data$density), fill = .data$chromEnd)) +
+    geom_vline(aes(xintercept = mean(.data$telomere_length, na.rm = TRUE)),
       color = "#ff0051", linetype = "dashed", linewidth = 1
     ) +
     labs(
@@ -301,7 +302,7 @@ tecat_plot <- function(mapped_output = NULL,
   right$ref_name <- factor(right$ref_name, levels = unique(right$ref_name))
   
   # Start violin plot
-  top <- ggplot(left, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
+  top <- ggplot(left, aes(x = .data$ref_name, y = .data$telomere_length / 1000, fill = .data$chromEnd)) +
     geom_violin(drop = FALSE) +
     geom_boxplot(width = 0.1) +
     scale_fill_manual(values = c("#0091ff")) +
@@ -314,7 +315,7 @@ tecat_plot <- function(mapped_output = NULL,
     theme(text = element_text(size = 18)) +
     theme(legend.position = "none")
 
-  bottom <- ggplot(right, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
+  bottom <- ggplot(right, aes(x = .data$ref_name, y = .data$telomere_length / 1000, fill = .data$chromEnd)) +
     geom_violin(drop = FALSE) +
     geom_boxplot(width = 0.1) +
     scale_fill_manual(values = c("#ff00b7")) +

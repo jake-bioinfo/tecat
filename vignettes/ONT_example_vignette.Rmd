@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 This package depends on MEME and minimap2. MEME is a motif analysis tool which is used to determine the most common telomere motifs in a reference genome. Minimap2 is a read aligner which is used to align reads to the reference genome. Both of these tools are required for the package to run.
 
 ## Install MEME
-Download the software from https://meme-suite.org/doc/download.html
+Download the software from https://meme-suite.org/meme/doc/download.html
 Type the following commands: 
 
 ```{bash, eval = FALSE}
@@ -197,6 +197,7 @@ telomere_stats <- readRDS(file.path(
 ))
 
 telo_file <- file.path(extdata, "combined_telo.fa.gz")
+#telo_file <- file.path(data_dir, "telo", "combined_telo.fa.gz")
 ```
 
 ```{r telo_cut, eval = TRUE}
@@ -413,20 +414,28 @@ telomere_frequencies <- readRDS(file.path(
   "freqs.rds"
 ))
 
-# Run findtellength over all telomeres in parallel
-library(parallel)
 # Setup parallel environment
 cl <- parallel::makeCluster(threads)
 parallel::clusterExport(cl, c("findTelLength"),
   envir = environment()
 )
-invisible(parallel::clusterEvalQ(cl, require(plyr)))
+
+# Load plyr inside the cluster only
+invisible(parallel::clusterEvalQ(cl, {
+  if (!requireNamespace("plyr", quietly = TRUE)) {
+    stop("plyr package is needed for this vignette")
+  }
+  library(plyr)
+  NULL
+}))
 
 results <- invisible(parallel::parLapply(cl, telomere_frequencies,
   findTelLength,
   st.thresh = thresholds$sensitivity,
   en.thresh = thresholds$telomere_length
 ))
+
+# Stop the cluster
 parallel::stopCluster(cl)
 
 results_df <- do.call(rbind.data.frame, results)
@@ -451,13 +460,23 @@ print(paste0("Number of telomeres found: ", length(telomere_lengths), "\n"))
 wo_na <- results_df[!is.na(results_df$telomere_end), ]
 print(paste0("Mean telomere length at 20-15 without NA: ", mean(wo_na$telomere_length)))
 
-# Create histogrma of telomere lengths
-hist(telomere_lengths,
-  breaks = round(sqrt(length(telomere_lengths))),
-  main = "Histogram of Telomere Lengths",
-  xlab = "Telomere Length (bp)",
-  ylab = "Frequency"
-)
+# Add this check before creating the histogram
+if(length(telomere_lengths) > 1) {
+  # Calculate number of breaks, ensuring a minimum of 2
+  num_breaks <- max(2, round(sqrt(length(telomere_lengths))))
+  
+  # Create histogram of telomere lengths
+  hist(telomere_lengths,
+    breaks = num_breaks,
+    main = "Histogram of Telomere Lengths",
+    xlab = "Telomere Length (bp)",
+    ylab = "Frequency"
+  )
+} else {
+  # Create an empty plot with a message when insufficient data
+  plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "")
+  text(0, 0, "Insufficient telomere length data for histogram", cex = 1.5)
+}
 ```
 
 # Truncation and Mapping
@@ -475,6 +494,7 @@ ls()
 find_sizes()
 
 telomere_file <- file.path(extdata, "combined_telo.fa.gz")
+#telomere_file <- file.path(data_dir, "telo", "combined_telo.fa.gz")
 ref_file <- reference_file
 
 # Truncate telomeres
@@ -506,6 +526,9 @@ mapped_output <- map(
   threads = threads
 )
 
+# Check if mapping was successful
+mapped_output$results
+
 # Save mapped output
 saveRDS(mapped_output, file.path(
   results_dir,
@@ -520,63 +543,30 @@ mapped_output <- readRDS(file.path(
   results_dir,
   "mapped_output.rds"
 ))
-mapped_output$results$sample <- sample_name
 
-# Create violin plot of mapped_output with top and bottom panels
-library(extrafont)
-loadfonts()
+mapped_output$results
 
-# Histogram with mean indicated on telomere length data in results_df and fill by chromEnd
-hist <- ggplot(mapped_output[["results"]], aes(x = telomere_length)) +
-  geom_histogram(binwidth = 100, aes(fill = chromEnd, y = after_stat(density)), alpha = 0.3) +
-  geom_density(alpha = 0.6, aes(y = after_stat(density), fill = chromEnd)) +
-  geom_vline(aes(xintercept = mean(telomere_length, na.rm = TRUE)),
-    color = "#ff0051", linetype = "dashed", linewidth = 1
-  ) +
-  labs(
-    x = "Telomere Length",
-    y = "Frequency",
-    title = "Histogram of Telomere Lengths"
-  ) +
-  theme(text = element_text(size = 22, family = "Arial"))
-
-
-left <- mapped_output[["results"]][mapped_output[["results"]]$chromEnd == "5'", ]
-ord <- order(as.numeric(stringr::str_extract(left$ref_name, "\\d+")))
-left <- left[ord, ]
-left$ref_name <- factor(left$ref_name, levels = unique(left$ref_name))
-right <- mapped_output[["results"]][mapped_output[["results"]]$chromEnd == "3'", ]
-ord <- order(as.numeric(stringr::str_extract(right$ref_name, "\\d+")))
-right <- right[ord, ]
-right$ref_name <- factor(right$ref_name, levels = unique(right$ref_name))
-top <- ggplot(left, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
-  geom_violin(drop = FALSE) +
-  geom_boxplot(width = 0.1) +
-  scale_fill_manual(values = c("#0091ff")) +
-  labs(
-    x = "Chromosome",
-    y = "Telomere Length (kb)",
-    title = "Telomere Lengths by Chromosome End 5'"
-  ) +
-  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
-  theme(text = element_text(size = 18, family = "Arial"))
-
-bottom <- ggplot(right, aes(x = ref_name, y = telomere_length / 1000, fill = chromEnd)) +
-  geom_violin(drop = FALSE) +
-  geom_boxplot(width = 0.1) +
-  scale_fill_manual(values = c("#ff00b7")) +
-  labs(
-    x = "Chromosome",
-    y = "Telomere Length (kb)",
-    title = "Telomere Lengths by Chromosome End 3'"
-  ) +
-  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1)) +
-  theme(text = element_text(size = 18, family = "Arial"))
-
-grid <- plot_grid(top, bottom, ncol = 1)
-grid
-save_plot(file.path(results_dir, "violin_plot.png"), grid, base_width = 12, base_height = 6)
-save_plot(file.path(results_dir, "histogram.png"), hist, base_width = 12, base_height = 6)
+# Add a check before trying to modify the data frame
+if (nrow(mapped_output$results) > 0) {
+  mapped_output$results$sample <- sample_name
+  
+  # Create violin plot of mapped_output with top and bottom panels
+  library(extrafont)
+  loadfonts()
+  
+  chromesome_plt <- tecat_plot(mapped_output = mapped_output,
+    out_dir = results_dir,
+    prefix = sample_name, 
+    save_plots = TRUE,
+    return = TRUE)
+  
+  # Print the chromesome plot
+  chromesome_plt
+} else {
+  # Create a placeholder message or simple plot when data is missing
+  plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "")
+  text(0, 0, "No mapping results available for plotting", cex = 1.5)
+}
 ```
 
 # Exporting Results
@@ -584,18 +574,22 @@ Produce CSV table of results.
 ```{r empty}
 data <- mapped_output$results
 
-head(data)
-new <- data.frame(data[, c(1:13)])
-rand_telo <- round(rnorm(nrow(new),
-  mean = mean(data$telomere_length, na.rm = TRUE),
-  sd = stats::sd(data$telomere_length, na.rm = TRUE)
-))
+if (!is.null(data) && nrow(data) > 0) {
+  head(data)
+  new <- data.frame(data[, c(1:13)])
+  rand_telo <- round(rnorm(nrow(new),
+    mean = mean(data$telomere_length, na.rm = TRUE),
+    sd = stats::sd(data$telomere_length, na.rm = TRUE)
+  ))
 
-# Save csv file
-write.csv(data, file = file.path(
-  results_dir,
-  "output_results.csv"
-))
+  # Save csv file
+  write.csv(data, file = file.path(
+    results_dir,
+    "output_results.csv"
+  ))
+} else {
+  message("No data available to export.")
+}
 ```
 
 # Session Info

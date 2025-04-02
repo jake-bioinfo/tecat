@@ -39,11 +39,13 @@ Imports:
     foreach,
     magrittr,
     stringi, 
-    pryr
+    pryr, 
+    rlang
 Suggests:
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0), 
+    plyr
 License: file LICENSE
 URL: https://github.com/jake-bioinfo/tecat
 VignetteBuilder: knitr

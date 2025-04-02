@@ -20,7 +20,7 @@
 #' basecalling errors if applicable. It repeats and extends the motifs to create search patterns for 
 #' FASTQ files. The function returns a list with the search patterns ('grep_list'), identified motifs 
 #' ('motifs'), and MEME analysis results ('results').
-#' @param data_ref DNAStringSet reference data.
+#' @param reference_file DNAStringSet reference data.
 #' @param reference_telo_length numeric predicted length of telomeres
 #' present in the reference file.
 #' @param telo_motif_length numeric length of telomere motif.

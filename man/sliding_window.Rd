@@ -7,14 +7,14 @@
 sliding_window(telomere_sequence, window_length = 200, step = 100)
 }
 \arguments{
+\item{telomere_sequence}{A DNAStringSet object containing the telomere
+sequences to be processed.}
+
 \item{window_length}{An integer specifying the length of each sliding
 window. Default is 200.}
 
 \item{step}{An integer specifying the step size for moving the window.
 Default is 100.}
-
-\item{telomere_sequences}{A DNAStringSet object containing the telomere
-sequences to be processed.}
 }
 \value{
 A list of IRanges::Views objects, each containing overlapping

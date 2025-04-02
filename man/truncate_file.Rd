@@ -33,9 +33,6 @@ reads. Default is FALSE.}
 
 \item{verbose}{A logical value specifying whether to display verbose
 messages. Default is TRUE.}
-
-\item{progress}{A logical value specifying whether to display progress
-messages. Default is TRUE.}
 }
 \value{
 A list containing the truncated reads and the truncated file list.

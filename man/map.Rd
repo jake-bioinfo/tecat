@@ -40,9 +40,6 @@ reads. Default is TRUE.}
 
 \item{verbose}{A logical value specifying whether to display verbose messages.
 Default is TRUE.}
-
-\item{underscore}{A logical value specifying whether to use underscores in
-the chromosome names. Default is TRUE.}
 }
 \value{
 A list containing the mapped reads and the results data frame.

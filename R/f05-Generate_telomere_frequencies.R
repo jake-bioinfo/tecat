@@ -92,8 +92,22 @@ generate_telomere_frequencies <- function(telomere_windows,
 #' @title Generate telomere frequencies
 #' @description Generate telomere frequencies based on each sliding window in an
 #' individual telomere.
-#' @param telomere_windows An XStringViews object containing telomere windows.
+#' @param windows A list of telomere windows, each containing an XStringViews object.
 #' @param motifs A character vector of telomere motifs to search for.
+#' @param environment A character string specifying the environment in which to
+#' run the function. Default is 'linux'.
+#' @param parallel A logical specifying whether to run the function in parallel.
+#' Default is TRUE.
+#' @param threads An integer specifying the number of threads to use for parallel
+#' processing. Default is 4.
+#' @param save_files A logical specifying whether to save the results to a file.
+#' Default is TRUE.
+#' @param out_dir A character string specifying the output directory for saving
+#' the results. Default is the current working directory.
+#' @param progress A logical specifying whether to show a progress bar. Default is
+#' FALSE.
+#' @param verbose A logical specifying whether to print messages. Default is
+#' FALSE.
 #' @return A data frame containing the start, end, window length, telomere
 #' count, motif frequency, and hit motif.
 #' @importFrom Biostrings DNAStringSetList DNAStringSet countPattern start nchar
@@ -101,8 +115,8 @@ generate_telomere_frequencies <- function(telomere_windows,
 frequencies <- function(windows,
                         motifs,
                         environment = "linux",
-                        parallel = FALSE,
-                        threads = 0,
+                        parallel = TRUE,
+                        threads = 4,
                         save_files = TRUE,
                         out_dir = file.path(getwd(), "telomere_frequencies"),
                         progress = FALSE,

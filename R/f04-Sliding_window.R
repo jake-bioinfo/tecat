@@ -17,7 +17,7 @@
 #' cleans up memory and returns the list of windowed views, allowing
 #' for detailed analysis of these smaller sequence segments.
 #'
-#' @param telomere_sequences A DNAStringSet object containing the telomere
+#' @param telomere_sequence A DNAStringSet object containing the telomere
 #' sequences to be processed.
 #' @param window_length An integer specifying the length of each sliding
 #' window. Default is 200.
@@ -84,6 +84,7 @@ sliding_window <- function(telomere_sequence,
 #' of the original telomere sequences.
 #' @importFrom Biostrings readDNAStringSet
 #' @import parallel pbmcapply foreach doParallel
+#' @importFrom utils globalVariables
 #' @export
 sliding_window_parallel <- function(telomere_file,
                                     window_length = 200,
@@ -91,6 +92,7 @@ sliding_window_parallel <- function(telomere_file,
                                     environment = "linux",
                                     threads = 1,
                                     verbose = FALSE) {
+
   # Status message
   if (verbose) {
     cat(
@@ -126,12 +128,16 @@ sliding_window_parallel <- function(telomere_file,
     cl <- makeCluster(threads)
     doParallel::registerDoParallel(cl)
 
+    # Initialize the iterator
+    i <- 0
+
     # Run parallel
     ret <- foreach::foreach(
-      x = X,
+      i = seq_along(X),
       .combine = "c",
       .export = "sliding_window"
     ) %dopar% {
+      x <- X[[i]] # Extract the i-th DNAString from the list
       sliding_window(x,
         window_length = window_length, 
         step = step

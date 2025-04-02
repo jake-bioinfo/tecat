@@ -13,6 +13,8 @@ tecat_plot(
 )
 }
 \arguments{
+\item{mapped_output}{A list containing the mapped reads and the results data frame.}
+
 \item{out_dir}{A character string specifying the output directory.}
 
 \item{prefix}{A character string specifying the prefix for the output files.}
@@ -21,10 +23,6 @@ tecat_plot(
 
 \item{return}{A logical value specifying whether to return the plotted reads.
 Default is FALSE.}
-
-\item{mapped_results}{A list containing the mapped reads and the results data frame.}
-
-\item{verbose}{A logical value specifying whether to display verbose messages.}
 }
 \value{
 A list containing the histogram and violin plot.
