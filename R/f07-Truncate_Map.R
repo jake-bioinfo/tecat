@@ -164,11 +164,8 @@ map <- function(fasta = NULL,
                                      verbose = verbose, 
                                      ... = paste0("--secondary=no"))
 
-  # Get duplicate information
-  mapped_reads$is_duplicate <- duplicated(mapped_reads$qname)
-
-  # Keep only first occurrence of each qname
-  mapped_reads <- mapped_reads[!mapped_reads$is_duplicate, ]
+  # Check if mapped_reads unique
+  mapped_reads_unique <- mapped_reads[!duplicated(mapped_reads$qname), ]
 
   # Add telo_name to mapped reads
   results_data_frame$telo_name <- rownames(results_data_frame)

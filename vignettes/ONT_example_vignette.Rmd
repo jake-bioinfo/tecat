@@ -79,7 +79,7 @@ if(extdata == "") {
   }
 }
 
-sample_file <- file.path("~/tmp", sample_name, "fastq/SRR28295757.fastq")
+#sample_file <- file.path("/path/to/sra_fastq/")
 reference_file <- file.path(extdata, "chr_ends.fa.gz")
 data_dir <- tempdir()
 results_dir <- file.path("~/tmp", sample_name, "results")
@@ -197,7 +197,6 @@ telomere_stats <- readRDS(file.path(
 ))
 
 telo_file <- file.path(extdata, "combined_telo.fa.gz")
-#telo_file <- file.path(data_dir, "telo", "combined_telo.fa.gz")
 ```
 
 ```{r telo_cut, eval = TRUE}
@@ -589,6 +588,20 @@ if (!is.null(data) && nrow(data) > 0) {
   ))
 } else {
   message("No data available to export.")
+}
+```
+
+# Run RShiny
+```{r shiny, eval = FALSE}
+# Load the shiny package
+library(shiny)
+library(shinyjs)
+
+shiny_path <- file.path("./RShiny")
+if (dir.exists(shiny_path)) {
+  shiny::runApp(shiny_path, launch.browser = TRUE)
+} else {
+  stop("Shiny app directory does not exist.")
 }
 ```
 
