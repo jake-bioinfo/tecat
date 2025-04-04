@@ -593,16 +593,8 @@ if (!is.null(data) && nrow(data) > 0) {
 
 # Run RShiny
 ```{r shiny, eval = FALSE}
-# Load the shiny package
-library(shiny)
-library(shinyjs)
-
-shiny_path <- file.path("./RShiny")
-if (dir.exists(shiny_path)) {
-  shiny::runApp(shiny_path, launch.browser = TRUE)
-} else {
-  stop("Shiny app directory does not exist.")
-}
+# Run RShiny
+launch_dashboard()
 ```
 
 # Session Info

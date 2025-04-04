@@ -40,7 +40,10 @@ Imports:
     magrittr,
     stringi, 
     pryr, 
-    rlang
+    rlang, 
+    shiny, 
+    shinyjs, 
+    shinydashboard
 Suggests:
     knitr,
     rmarkdown,
