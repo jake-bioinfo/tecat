@@ -254,7 +254,7 @@ map <- function(fasta = NULL,
 #' Default is FALSE.
 #' @param save_plots A logical value specifying whether to save the plot to disk.
 #' @return A list containing the histogram and violin plot.
-#' @import ggplot2 cowplot extrafont
+#' @import ggplot2 cowplot
 #' @importFrom rlang .data
 #' @importFrom cowplot save_plot
 #' @importFrom dplyr distinct

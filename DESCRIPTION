@@ -1,7 +1,17 @@
 Package: TECAT
 Version: 0.1.0
-Date: 2025-03-30
+Date: 2025-04-04
 Title: Calculating Chromosome End Specific Telomere Lengths
+Authors@R: c(person(given = "Jake",
+                    family = "Reed",
+                    role = c("aut", "cre"),
+                    email = "hreed.ga@gmail.com"),
+                person(given = c("Kevin", "R."),
+                    family = "Coombes",
+                    role = "aut"),
+                person(given = "Mark",
+                    family = "Oelkuct",
+                    role = "aut"))
 Author: Jake Reed, Kevin R. Coombes, Mark Oelkuct
 Maintainer: Jake Reed <hreed.ga@gmail.com>
 Description: This application determines chromosome end specific 
@@ -21,7 +31,6 @@ biocViews:
 Imports:
     pbmcapply (>= 1.5.0),
     doParallel,
-    extrafont,
     minimapR,
     universalmotif (>= 1.8.0),
     memes (>= 0.1.0),
@@ -33,7 +42,6 @@ Imports:
     methods,
     cowplot,
     zoo,
-    data.table, 
     inflection,
     IRanges,
     foreach,
@@ -41,14 +49,13 @@ Imports:
     stringi, 
     pryr, 
     rlang, 
-    shiny, 
-    shinyjs, 
-    shinydashboard
+    shiny
 Suggests:
     knitr,
+    plyr,
     rmarkdown,
-    testthat (>= 3.0.0), 
-    plyr
+    shinydashboard, 
+    shinyjs
 License: file LICENSE
 URL: https://github.com/jake-bioinfo/tecat
 VignetteBuilder: knitr

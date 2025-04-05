@@ -142,7 +142,7 @@ telomere_matching <- function(fastq_file,
 #' @description \code{telo_search} takes as input a \code{list} of fastq files and
 #' searches for telomere repeats in the sequences. It returns a
 #' list of sequences which contain telomere repeats (if \code{return_telomeres}: TRUE),
-#' a \code{data.table} of statistics for each file and a \code{list} of files.
+#' a table of statistics for each file and a \code{list} of files.
 #' \code{return_telomeres} should only be TRUE when you have an exssesive amount of
 #' memory (RAM) to store the telomere sequences in the R session, roughly > 2 TB.
 #'
@@ -151,7 +151,7 @@ telomere_matching <- function(fastq_file,
 #' function to analyze each file for telomere motifs, collecting sequences and statistics
 #' such as average read length and percentage of telomere bases. The function runs these
 #' searches concurrently with pbmcapply::pbmclapply, handles multiple threads, and can
-#' optionally show progress updates. After processing, it compiles a data.table of statistics
+#' optionally show progress updates. After processing, it compiles a table of statistics
 #' and, based on the return_telomeres parameter, returns either a list of telomere sequences,
 #' statistics, and file paths, or just the statistics and file paths. The function also manages
 #' verbosity and output directory options to control the search process and results.
@@ -166,7 +166,7 @@ telomere_matching <- function(fastq_file,
 #' @param verbose A logical of whether to print messages.
 #' @param progress A logical of whether to show a progress bar.
 #' @return A \code{list} of telomere sequences (if \code{return_telomere}: is TRUE),
-#' \code{data.table} of statistics, and a file \code{list}.
+#' table of statistics, and a file \code{list}.
 #' @export
 telo_search <- function(fastq_files = NULL,
                         grep_list = NULL,
@@ -228,11 +228,17 @@ telo_search <- function(fastq_files = NULL,
     telomeres <- bio_ul(telomeres)
 
     # Formatting results
-    stats_df <- data.table::rbindlist(
-        lapply(results, function(x) {
-            x$telomere_stats
-        })
-    )
+    # stats_df <- data.table::rbindlist(
+    #     lapply(results, function(x) {
+    #         x$telomere_stats
+    #     })
+    # )
+
+    # Formatting results
+    stats_df <- do.call(rbind, lapply(results, function(x) {
+        x$telomere_stats
+    }))
+
     colnames(stats_df) <- c(
         "mean_telomere_read_length",
         "total_telomere_length",

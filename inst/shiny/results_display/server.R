@@ -99,18 +99,18 @@ datasetInput <- reactive({
   #**************************************************************
   
   output$png <- renderUI({
-    tags$a(img(src = "www/paper.png", width = "200px", height = "200px"), href = "https://www.ebi.ac.uk/gxa/experiments/E-MTAB-2770/Results")
+    tags$a(img(src = "www/paper.jpg", width = "200px", height = "200px"), href = "https://www.ebi.ac.uk/gxa/experiments/E-MTAB-2770/Results")
   })
   output$paperpng <- renderImage(
     {
-      filename <- "www/githubclean.png"
+      filename <- "www/githubclean.jpg"
       list(
         src = filename
       )
     },
     deleteFile = FALSE
   )
-  images <- c("www/tel1.png", "www/tel2.png", "www/tel3.png", "www/tel4.png", "www/tel5.png", "www/tel6.png", "www/tel7.png", "www/vign6.png")
+  images <- c("www/tel1.jpg", "www/tel2.jpg", "www/tel3.jpg", "www/tel4.jpg", "www/tel5.jpg", "www/tel6.jpg", "www/tel7.jpg", "www/vign6.jpg")
   output$image <- renderImage(
     {
       filename <- normalizePath(file.path(paste0(images[1])))

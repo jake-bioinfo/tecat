@@ -72,14 +72,14 @@ sample_name <- "HG002"
 extdata <- system.file("extdata", package = "TECAT")
 if(extdata == "") {
   # Fallback for when package isn't installed (during development/build)
-  if(file.exists("~/cran/tecat/inst/extdata")) {
-    extdata <- "~/cran/tecat/inst/extdata"
+  if(file.exists("./inst/extdata")) {
+    extdata <- "./inst/extdata"
   } else {
     stop("Cannot find package extdata directory")
   }
 }
 
-#sample_file <- file.path("/path/to/sra_fastq/")
+#sample_file <- file.path("/path/to/sample/fastq.gz|fastq")
 reference_file <- file.path(extdata, "chr_ends.fa.gz")
 data_dir <- tempdir()
 results_dir <- file.path("~/tmp", sample_name, "results")
@@ -548,10 +548,6 @@ mapped_output$results
 # Add a check before trying to modify the data frame
 if (nrow(mapped_output$results) > 0) {
   mapped_output$results$sample <- sample_name
-  
-  # Create violin plot of mapped_output with top and bottom panels
-  library(extrafont)
-  loadfonts()
   
   chromesome_plt <- tecat_plot(mapped_output = mapped_output,
     out_dir = results_dir,
